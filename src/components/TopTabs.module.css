@@ -1,0 +1,49 @@
+.panel {
+  height: 60px;
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  padding-left: 24px;
+  border-radius: 12px;
+  background-color: #2b2b2b;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #cfcfcf;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tab:focus-visible {
+  outline: 2px solid #a6ff00;
+  outline-offset: -6px;
+  border-radius: 8px;
+}
+
+.active {
+  color: #a6ff00;
+}
+
+.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background-color: #a6ff00;
+}
+
+.icon {
+  line-height: 1;
+}
