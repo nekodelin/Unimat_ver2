@@ -1,0 +1,33 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  min-width: 72px;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a4a4a;
+  text-align: center;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.index {
+  color: #4a4a4a;
+  font-size: 12px;
+  font-family: Consolas, 'Courier New', monospace;
+  line-height: 1;
+}

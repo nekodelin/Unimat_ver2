@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ImageView from './ImageView'
 import TopTabs, { type TabKey } from './TopTabs'
+import TechPage from '../pages/TechPage'
 import styles from './Layout.module.css'
 
 function Layout() {
@@ -10,7 +11,7 @@ function Layout() {
     <div className={styles.container}>
       <TopTabs activeTab={activeTab} onTabChange={setActiveTab} />
       <main className={styles.workspace}>
-        {activeTab === 'train' ? <ImageView /> : null}
+        {activeTab === 'train' ? <ImageView /> : <TechPage />}
       </main>
     </div>
   )

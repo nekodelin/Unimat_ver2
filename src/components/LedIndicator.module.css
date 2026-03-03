@@ -1,0 +1,26 @@
+.led {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #2f2f2f;
+}
+
+.yellow {
+  background-color: #3b3518;
+}
+
+.red {
+  background-color: #3c1d1b;
+}
+
+.yellowActive {
+  background-color: #ffd600;
+  box-shadow: 0 0 6px rgba(255, 214, 0, 0.95), 0 0 12px rgba(255, 214, 0, 0.65);
+}
+
+.redActive {
+  background-color: #ff3b30;
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.95), 0 0 12px rgba(255, 59, 48, 0.65);
+}
