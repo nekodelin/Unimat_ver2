@@ -1,4 +1,4 @@
-import styles from './TopTabs.module.css'
+﻿import styles from './TopTabs.module.css'
 
 export type TabKey = 'train' | 'technical'
 
