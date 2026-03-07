@@ -1,9 +1,7 @@
-﻿import { useMemo, useState } from 'react'
-import HotspotsLayer, { type LayerHotspot } from '@/components/ModuleModal/HotspotsLayer'
+import { useState, type CSSProperties } from 'react'
 import ModuleModal from '@/components/ModuleModal/ModuleModal'
-import { statusToTone } from '@/config/statusVisual'
+import { trainZones, type TrainZone } from '@/config/trainZonesConfig'
 import { useRealtimeStore } from '@/store/useRealtimeStore'
-import type { ChannelStatus } from '@/types/realtime'
 import styles from './TrainPage.module.css'
 
 const trainImageMap = import.meta.glob('@/assets/images/train/train.jpg', {
@@ -19,69 +17,84 @@ type ModalState = {
   relatedChannelIds: string[]
 }
 
-function toHotspotStatus(status: string): 'ok' | 'fault' | 'warning' | 'inactive' {
-  const tone = statusToTone(status as ChannelStatus)
-
-  if (tone === 'green') {
-    return 'ok'
+function createTrainZoneStyle(zone: TrainZone): CSSProperties {
+  return {
+    left: zone.left,
+    top: zone.top,
+    width: zone.width,
+    height: zone.height,
   }
-
-  if (tone === 'red') {
-    return 'fault'
-  }
-
-  if (tone === 'warning') {
-    return 'warning'
-  }
-
-  return 'inactive'
 }
 
 function TrainPage() {
   const { zones, loading } = useRealtimeStore()
   const [modalState, setModalState] = useState<ModalState | null>(null)
-
-  const layerHotspots = useMemo<LayerHotspot[]>(
-    () =>
-      zones.map((zone) => ({
-        id: zone.id,
-        title: zone.title,
-        rect: zone.rect,
-        status: toHotspotStatus(zone.status),
-      })),
-    [zones],
-  )
+  const [isNoDataOpen, setNoDataOpen] = useState(false)
 
   const openModuleModal = ({ moduleId, hotspotId, relatedChannelIds }: ModalState) => {
     setModalState({ moduleId, hotspotId, relatedChannelIds })
+  }
+
+  const openExistingModuleModal = (sourceZoneId?: string) => {
+    const selected =
+      (sourceZoneId ? zones.find((zone) => zone.id === sourceZoneId) : null) ??
+      zones.find((zone) => zone.channelIds.length > 0) ??
+      zones[0]
+
+    if (!selected) {
+      return
+    }
+
+    openModuleModal({
+      moduleId: selected.moduleId,
+      hotspotId: selected.id,
+      relatedChannelIds: selected.channelIds,
+    })
+  }
+
+  const onZoneClick = (zone: TrainZone) => {
+    if (zone.action === 'show-no-data') {
+      setModalState(null)
+      setNoDataOpen(true)
+      return
+    }
+
+    setNoDataOpen(false)
+    openExistingModuleModal(zone.sourceZoneId)
   }
 
   return (
     <>
       <section className={styles.page}>
         <div className={styles.imageStage}>
-          {trainImg ? (
-            <img src={trainImg} alt="Поезд" className={styles.trainImage} />
-          ) : (
-            <div className={styles.noImage}>NO IMAGE</div>
-          )}
+          <div className={styles.trainCanvas}>
+            {trainImg ? (
+              <img src={trainImg} alt="Поезд" className={styles.trainImage} />
+            ) : (
+              <div className={styles.noImage}>NO IMAGE</div>
+            )}
 
-          <HotspotsLayer
-            hotspots={layerHotspots}
-            selectedHotspotId={modalState?.hotspotId}
-            onHotspotClick={(hotspotId) => {
-              const selected = zones.find((zone) => zone.id === hotspotId)
-              if (!selected) {
-                return
-              }
+            <div className={styles.zonesLayer}>
+              {trainZones.map((zone) => {
+                const title =
+                  zone.action === 'show-no-data' ? zone.label || 'Данных нет' : 'Открыть окно узла'
 
-              openModuleModal({
-                moduleId: selected.moduleId,
-                hotspotId: selected.id,
-                relatedChannelIds: selected.channelIds,
-              })
-            }}
-          />
+                return (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    title={title}
+                    aria-label={title}
+                    className={`${styles.trainZone} ${
+                      modalState && zone.action === 'open-existing-modal' ? styles.trainZoneActive : ''
+                    }`}
+                    style={createTrainZoneStyle(zone)}
+                    onClick={() => onZoneClick(zone)}
+                  />
+                )
+              })}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -96,9 +109,25 @@ function TrainPage() {
           onClose={() => setModalState(null)}
         />
       ) : null}
+
+      {isNoDataOpen ? (
+        <div className={styles.noDataOverlay} onClick={() => setNoDataOpen(false)}>
+          <div
+            className={styles.noDataDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Информация по зоне"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className={styles.noDataText}>Данных нет</p>
+            <button type="button" className={styles.noDataClose} onClick={() => setNoDataOpen(false)}>
+              Закрыть
+            </button>
+          </div>
+        </div>
+      ) : null}
     </>
   )
 }
 
 export default TrainPage
-

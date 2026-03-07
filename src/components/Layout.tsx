@@ -5,7 +5,7 @@ import TrainPage from '@/pages/TrainPage'
 import styles from './Layout.module.css'
 
 function Layout() {
-  const [activeTab, setActiveTab] = useState<TabKey>('technical')
+  const [activeTab, setActiveTab] = useState<TabKey>('train')
 
   return (
     <div className={styles.container}>
