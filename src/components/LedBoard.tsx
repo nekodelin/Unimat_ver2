@@ -1,27 +1,45 @@
-﻿import type { ChannelEntity } from '@/types/realtime'
+import { useMemo } from 'react'
 import { statusToTone } from '@/config/statusVisual'
+import { bitFromPhotoIndex, TECH_BITS, toTechnicalBit, type TechnicalBit } from '@/pages/Technical/technicalConfig'
+import type { ChannelEntity } from '@/types/realtime'
 import styles from './LedBoard.module.css'
 
 type LedBoardProps = {
   channels: ChannelEntity[]
+  moduleLabel?: string
+  selectedBit?: string | null
+  onSelectBit?: (bit: TechnicalBit) => void
 }
 
-const ROW_KEYS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'] as const
+function resolveBit(channel: Pick<ChannelEntity, 'channelKey' | 'photoIndex'>): TechnicalBit | null {
+  const fromChannelKey = toTechnicalBit(channel.channelKey.slice(-1))
+  if (fromChannelKey) {
+    return fromChannelKey
+  }
 
-function LedBoard({ channels }: LedBoardProps) {
-  const orderedChannels = [...channels].sort((a, b) => {
-    const aOrder = a.photoIndex ?? Number.MAX_SAFE_INTEGER
-    const bOrder = b.photoIndex ?? Number.MAX_SAFE_INTEGER
-    if (aOrder !== bOrder) {
-      return aOrder - bOrder
-    }
+  return bitFromPhotoIndex(channel.photoIndex)
+}
 
-    return a.id.localeCompare(b.id)
-  })
+function LedBoard({ channels, moduleLabel = 'QL6C', selectedBit, onSelectBit }: LedBoardProps) {
+  const normalizedSelectedBit = selectedBit ? selectedBit.toUpperCase() : null
 
-  const channelsByIndex = new Map(
-    orderedChannels.map((channel, index) => [index.toString(16).toUpperCase(), channel] as const),
-  )
+  const channelsByBit = useMemo(() => {
+    const map = new Map<TechnicalBit, ChannelEntity>()
+
+    channels.forEach((channel) => {
+      const bit = resolveBit(channel)
+      if (!bit) {
+        return
+      }
+
+      const existing = map.get(bit)
+      if (!existing || channel.updatedAt >= existing.updatedAt) {
+        map.set(bit, channel)
+      }
+    })
+
+    return map
+  }, [channels])
 
   return (
     <section className={styles.board} aria-label="Плата диодов">
@@ -31,11 +49,14 @@ function LedBoard({ channels }: LedBoardProps) {
       </div>
 
       <div className={styles.rows}>
-        {ROW_KEYS.map((rowKey) => {
-          const channel = channelsByIndex.get(rowKey)
+        {TECH_BITS.map((rowKey) => {
+          const channel = channelsByBit.get(rowKey)
           const tone = channel ? statusToTone(channel.status) : 'inactive'
+          const isFault = channel ? channel.isFault || tone === 'red' : false
           const tooltip = channel
-            ? `${channel.channelKey || '-'} / ${channel.signalId || '-'}\n${channel.purpose}\n${channel.stateLabel}\n${channel.cause || 'Причина: -'}\n${channel.action || 'Действие: -'}`
+            ? `${channel.channelKey || '-'} / ${channel.signalId || '-'}\n${channel.purpose}\n${channel.stateLabel}\n${
+                channel.cause || 'Причина: -'
+              }\n${channel.action || 'Действие: -'}`
             : 'Нет данных'
 
           const leftLedClass =
@@ -48,14 +69,34 @@ function LedBoard({ channels }: LedBoardProps) {
                   : styles.ledLeftOff
 
           const rightLedClass =
-            tone === 'red'
+            isFault
               ? styles.ledRedOn
               : tone === 'inactive'
                 ? styles.ledInactive
                 : styles.ledRedOff
 
+          const isSelected = normalizedSelectedBit === rowKey
+          const rowClass = `${styles.row} ${onSelectBit ? styles.rowButton : ''} ${isSelected ? styles.rowSelected : ''}`
+
+          if (onSelectBit) {
+            return (
+              <button
+                key={rowKey}
+                type="button"
+                className={rowClass}
+                title={tooltip}
+                onClick={() => onSelectBit(rowKey)}
+                aria-label={`Канал ${rowKey}`}
+              >
+                <span className={`${styles.led} ${leftLedClass}`} aria-hidden="true" />
+                <span className={`${styles.led} ${rightLedClass}`} aria-hidden="true" />
+                <span className={styles.index}>{rowKey}</span>
+              </button>
+            )
+          }
+
           return (
-            <div key={rowKey} className={styles.row} title={tooltip}>
+            <div key={rowKey} className={rowClass} title={tooltip}>
               <span className={`${styles.led} ${leftLedClass}`} aria-hidden="true" />
               <span className={`${styles.led} ${rightLedClass}`} aria-hidden="true" />
               <span className={styles.index}>{rowKey}</span>
@@ -64,10 +105,9 @@ function LedBoard({ channels }: LedBoardProps) {
         })}
       </div>
 
-      <div className={styles.footer}>QL6C</div>
+      <div className={styles.footer}>{moduleLabel}</div>
     </section>
   )
 }
 
 export default LedBoard
-

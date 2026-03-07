@@ -47,6 +47,33 @@
   grid-template-columns: 12px 12px 1fr;
   gap: 12px;
   align-items: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+}
+
+.rowButton {
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.rowButton:hover {
+  background-color: rgba(216, 255, 0, 0.12);
+}
+
+.rowButton:focus-visible {
+  outline: 1px solid #d7ff00;
+  outline-offset: 1px;
+}
+
+.rowSelected {
+  background-color: rgba(216, 255, 0, 0.2);
+}
+
+.rowSelected .index {
+  color: #d7ff00;
+  font-weight: 700;
 }
 
 .led {

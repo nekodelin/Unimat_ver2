@@ -1,10 +1,11 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import LedBoard from '@/components/LedBoard'
+import { moduleOverlayZones } from '@/config/moduleOverlayMap'
 import { statusToLabel, statusToTone } from '@/config/statusVisual'
-import { moduleHotspotsQl6c } from '@/data/moduleHotspots_ql6c'
+import { bitFromPhotoIndex, toTechnicalBit, type TechnicalBit } from '@/pages/Technical/technicalConfig'
 import { useRealtimeStore } from '@/store/useRealtimeStore'
 import type { ChannelEntity, ChannelStatus } from '@/types/realtime'
-import HotspotsLayer from './HotspotsLayer'
-import LedBoard from './LedBoard'
+import ModulePhotoOverlay, { type OverlayZoneView, type OverlayVisualState } from './ModulePhotoOverlay'
 import ModuleTabs, { type ModuleTabItem, type ModuleTabStatus } from './ModuleTabs'
 import styles from './moduleModal.module.css'
 
@@ -22,6 +23,31 @@ interface ModuleModalProps {
   hotspotId: string
   relatedChannelIds?: string[]
   onClose: () => void
+}
+
+type ZoneViewWithChannel = OverlayZoneView & {
+  channel: ChannelEntity | null
+}
+
+function normalizeText(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+function normalizeModuleId(value: string): string {
+  return value.trim().toUpperCase()
+}
+
+function resolveChannelBit(channel: Pick<ChannelEntity, 'channelKey' | 'photoIndex'>): TechnicalBit | null {
+  const bitFromKey = toTechnicalBit(channel.channelKey.slice(-1))
+  if (bitFromKey) {
+    return bitFromKey
+  }
+
+  return bitFromPhotoIndex(channel.photoIndex)
+}
+
+function fallbackValue(value: string | null | undefined): string {
+  return value && value.trim() ? value : 'Нет данных'
 }
 
 function toTabStatus(status: ChannelStatus | undefined): ModuleTabStatus {
@@ -42,34 +68,27 @@ function toTabStatus(status: ChannelStatus | undefined): ModuleTabStatus {
   return 'ok'
 }
 
-function toHotspotStatus(channel: ChannelEntity | undefined): 'ok' | 'fault' | 'warning' | 'inactive' {
+function toOverlayStatus(channel: ChannelEntity | null): OverlayVisualState {
   if (!channel) {
     return 'inactive'
   }
 
   const tone = statusToTone(channel.status)
-
-  if (tone === 'red') {
+  if (channel.isFault || tone === 'red') {
     return 'fault'
   }
 
-  if (tone === 'warning') {
-    return 'warning'
+  if (tone === 'green') {
+    return 'ok'
   }
 
-  if (tone === 'inactive') {
-    return 'inactive'
-  }
-
-  return 'ok'
+  return 'inactive'
 }
 
 function ModuleModal({ moduleId, hotspotId, relatedChannelIds, onClose }: ModuleModalProps) {
   const { channels, modules } = useRealtimeStore()
   const [activeTab, setActiveTab] = useState<ModalTabId>('b31')
-  const [selectedHotspotId, setSelectedHotspotId] = useState<string>(
-    hotspotId || moduleHotspotsQl6c[0]?.id || '',
-  )
+  const [selectedZoneKey, setSelectedZoneKey] = useState<string | null>(null)
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -93,7 +112,8 @@ function ModuleModal({ moduleId, hotspotId, relatedChannelIds, onClose }: Module
     }
 
     if (sourceChannels.length === 0) {
-      sourceChannels = channels.filter((channel) => channel.module === moduleId)
+      const normalizedModule = normalizeModuleId(moduleId)
+      sourceChannels = channels.filter((channel) => normalizeModuleId(channel.module) === normalizedModule)
     }
 
     return [...sourceChannels].sort((a, b) => {
@@ -107,87 +127,139 @@ function ModuleModal({ moduleId, hotspotId, relatedChannelIds, onClose }: Module
     })
   }, [channels, moduleId, relatedChannelIds])
 
-  const moduleStatus = modules.find((module) => module.id === moduleId)?.status
-  const secondaryModuleStatus = modules.find((module) => module.id !== moduleId)?.status
+  const ql6cChannels = useMemo(
+    () => channels.filter((channel) => normalizeModuleId(channel.module) === 'QL6C'),
+    [channels],
+  )
+
+  const moduleStatuses = useMemo(() => {
+    const byModule = new Map<string, ChannelStatus>()
+
+    modules.forEach((module) => {
+      byModule.set(normalizeModuleId(module.id), module.status)
+    })
+
+    return byModule
+  }, [modules])
 
   const tabs: ModuleTabItem[] = useMemo(
     () => [
-      { id: 'b31', label: moduleId, status: toTabStatus(moduleStatus) },
-      { id: 'b24', label: modules.find((module) => module.id !== moduleId)?.id || 'N/A', status: toTabStatus(secondaryModuleStatus) },
+      {
+        id: 'b31',
+        label: 'B31/U15/QL6C',
+        status: toTabStatus(moduleStatuses.get('QL6C') ?? moduleStatuses.get(normalizeModuleId(moduleId))),
+      },
+      {
+        id: 'b24',
+        label: 'B24/U6/QL1C',
+        status: toTabStatus(moduleStatuses.get('QL1C')),
+      },
     ],
-    [moduleId, moduleStatus, modules, secondaryModuleStatus],
+    [moduleId, moduleStatuses],
   )
 
-  const yellowBits = useMemo(() => {
-    const bits = Array.from({ length: 16 }, () => false)
+  const channelLookup = useMemo(() => {
+    const bySignalId = new Map<string, ChannelEntity>()
+    const byChannelKey = new Map<string, ChannelEntity>()
+    const byModuleBit = new Map<string, ChannelEntity>()
 
-    relatedChannels.forEach((channel, index) => {
-      const target = channel.photoIndex != null ? channel.photoIndex - 1 : index
-      const tone = statusToTone(channel.status)
-      bits[target] = tone === 'green' || tone === 'warning'
+    const upsert = (map: Map<string, ChannelEntity>, rawKey: string, channel: ChannelEntity) => {
+      const key = normalizeText(rawKey)
+      if (!key) {
+        return
+      }
+
+      const existing = map.get(key)
+      if (!existing || channel.updatedAt >= existing.updatedAt) {
+        map.set(key, channel)
+      }
+    }
+
+    channels.forEach((channel) => {
+      upsert(bySignalId, channel.signalId, channel)
+      upsert(byChannelKey, channel.channelKey, channel)
+
+      const bit = resolveChannelBit(channel)
+      if (!bit) {
+        return
+      }
+
+      upsert(byModuleBit, `${normalizeModuleId(channel.module)}:${bit}`, channel)
     })
 
-    return bits
-  }, [relatedChannels])
+    return {
+      bySignalId,
+      byChannelKey,
+      byModuleBit,
+    }
+  }, [channels])
 
-  const redBits = useMemo(() => {
-    const bits = Array.from({ length: 16 }, () => false)
+  const relatedByBit = useMemo(() => {
+    const map = new Map<TechnicalBit, ChannelEntity>()
 
-    relatedChannels.forEach((channel, index) => {
-      const target = channel.photoIndex != null ? channel.photoIndex - 1 : index
-      bits[target] = statusToTone(channel.status) === 'red'
-    })
+    relatedChannels.forEach((channel) => {
+      const bit = resolveChannelBit(channel)
+      if (!bit) {
+        return
+      }
 
-    return bits
-  }, [relatedChannels])
-
-  const channelsByPhotoIndex = useMemo(() => {
-    const map = new Map<number, ChannelEntity>()
-
-    relatedChannels.forEach((channel, index) => {
-      const photoIndex = channel.photoIndex ?? index + 1
-      if (!map.has(photoIndex)) {
-        map.set(photoIndex, channel)
+      const existing = map.get(bit)
+      if (!existing || channel.updatedAt >= existing.updatedAt) {
+        map.set(bit, channel)
       }
     })
 
     return map
   }, [relatedChannels])
 
-  const hotspots = useMemo(
-    () =>
-      moduleHotspotsQl6c.map((hotspot, index) => {
-        const channel =
-          (hotspot.photoIndex ? channelsByPhotoIndex.get(hotspot.photoIndex) : null) ??
-          relatedChannels[index]
+  const zones = useMemo<ZoneViewWithChannel[]>(() => {
+    return moduleOverlayZones.map((zone) => {
+      const bySignal =
+        zone.signalIds
+          .map((signalId) => channelLookup.bySignalId.get(normalizeText(signalId)))
+          .find((item): item is ChannelEntity => Boolean(item)) ?? null
 
-        return {
-          ...hotspot,
-          status: toHotspotStatus(channel),
-          info: {
-            event: channel?.title || hotspot.info.event,
-            reason: channel?.cause || hotspot.info.reason,
-            fault: channel?.stateLabel || hotspot.info.fault,
-            action: channel?.action || hotspot.info.action,
-          },
-        }
-      }),
-    [channelsByPhotoIndex, relatedChannels],
+      const byChannelKey = channelLookup.byChannelKey.get(normalizeText(zone.channelKey)) ?? null
+      const bit = toTechnicalBit(zone.channelIndex)
+      const byModuleBit =
+        bit ? channelLookup.byModuleBit.get(normalizeText(`${zone.module}:${bit}`)) ?? null : null
+      const byRelated = zone.module === 'QL6C' && bit ? relatedByBit.get(bit) ?? null : null
+
+      const channel = bySignal ?? byChannelKey ?? byModuleBit ?? byRelated
+
+      return {
+        zone,
+        title: `${zone.id}. ${zone.title}`,
+        status: toOverlayStatus(channel),
+        channel,
+      }
+    })
+  }, [channelLookup.byChannelKey, channelLookup.byModuleBit, channelLookup.bySignalId, relatedByBit])
+
+  const effectiveSelectedZoneKey =
+    selectedZoneKey && zones.some((zone) => zone.zone.key === selectedZoneKey)
+      ? selectedZoneKey
+      : (zones.find((zone) => zone.channel)?.zone.key ?? zones[0]?.zone.key ?? null)
+
+  const selectedZone = zones.find((zone) => zone.zone.key === effectiveSelectedZoneKey) ?? zones[0] ?? null
+  const selectedBit = selectedZone?.zone.module === 'QL6C' ? toTechnicalBit(selectedZone.zone.channelIndex) : null
+
+  const selectedEvent = fallbackValue(
+    selectedZone
+      ? selectedZone.channel?.title || selectedZone.channel?.signalId || selectedZone.zone.title
+      : null,
   )
-
-  const selectedHotspot =
-    hotspots.find((hotspot) => hotspot.id === selectedHotspotId) ??
-    hotspots[0] ?? {
-      id: 'fallback',
-      title: 'Нет данных',
-      status: 'inactive',
-      rect: { x: 0, y: 0, w: 0, h: 0 },
-      info: { event: '', reason: '', fault: '', action: '' },
-    }
+  const selectedReason = fallbackValue(selectedZone?.channel?.cause)
+  const selectedFault = fallbackValue(
+    selectedZone?.channel
+      ? selectedZone.channel.stateLabel || statusToLabel(selectedZone.channel.status)
+      : null,
+  )
+  const selectedAction = fallbackValue(selectedZone?.channel?.action)
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalWindow} onClick={(event) => event.stopPropagation()}>
+      <div className={styles.modalWindow} data-hotspot-id={hotspotId} onClick={(event) => event.stopPropagation()}>
         <header className={styles.modalHeader}>
           <ModuleTabs tabs={tabs} activeTabId={activeTab} onTabChange={(tabId) => setActiveTab(tabId as ModalTabId)} />
           <button type="button" className={styles.closeButton} onClick={onClose}>
@@ -197,45 +269,49 @@ function ModuleModal({ moduleId, hotspotId, relatedChannelIds, onClose }: Module
 
         {activeTab === 'b31' ? (
           <div className={styles.modalContent}>
-            <aside className={styles.leftPane}>
-              <LedBoard yellowBits={yellowBits} redBits={redBits} moduleLabel={moduleId} />
+            <aside className={styles.boardPane}>
+              <LedBoard
+                channels={ql6cChannels}
+                moduleLabel="QL6C"
+                selectedBit={selectedBit}
+                onSelectBit={(bit) => {
+                  const target = zones.find(
+                    (zone) => zone.zone.module === 'QL6C' && toTechnicalBit(zone.zone.channelIndex) === bit,
+                  )
+                  if (!target) {
+                    return
+                  }
 
-              <div className={styles.infoList}>
-                <article className={styles.infoCard}>
-                  <h4 className={styles.infoTitle}>Событие</h4>
-                  <p className={styles.infoValue}>{selectedHotspot.info.event}</p>
-                </article>
-
-                <article className={styles.infoCard}>
-                  <h4 className={styles.infoTitle}>Причина</h4>
-                  <p className={styles.infoValue}>{selectedHotspot.info.reason}</p>
-                </article>
-
-                <article className={styles.infoCard}>
-                  <h4 className={styles.infoTitle}>Действие</h4>
-                  <p className={styles.infoValue}>{selectedHotspot.info.action}</p>
-                </article>
-
-                <article className={styles.infoCard}>
-                  <h4 className={styles.infoTitle}>Связанные каналы</h4>
-                  <div className={styles.relatedList}>
-                    {relatedChannels.length === 0 ? <p className={styles.infoValue}>Нет каналов</p> : null}
-                    {relatedChannels.map((channel) => (
-                      <div key={channel.id} className={styles.relatedItem}>
-                        <p className={styles.relatedTitle}>{channel.title || channel.signalId || channel.channelKey}</p>
-                        <p className={styles.relatedMeta}>
-                          {channel.channelKey || '-'} / {channel.signalId || '-'} | status: {statusToLabel(channel.status)}
-                        </p>
-                        <p className={styles.relatedMeta}>cause: {channel.cause || '-'}</p>
-                        <p className={styles.relatedMeta}>action: {channel.action || '-'}</p>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              </div>
+                  setSelectedZoneKey(target.zone.key)
+                }}
+              />
             </aside>
 
-            <section className={styles.rightPane}>
+            <section className={styles.infoPane}>
+              <div className={styles.infoHeader}>{selectedZone ? selectedZone.title : 'Зона не выбрана'}</div>
+
+              <article className={styles.infoCard}>
+                <h4 className={styles.infoTitle}>Событие</h4>
+                <p className={styles.infoValue}>{selectedEvent}</p>
+              </article>
+
+              <article className={styles.infoCard}>
+                <h4 className={styles.infoTitle}>Причина</h4>
+                <p className={styles.infoValue}>{selectedReason}</p>
+              </article>
+
+              <article className={styles.infoCard}>
+                <h4 className={styles.infoTitle}>Неисправность</h4>
+                <p className={styles.infoValue}>{selectedFault}</p>
+              </article>
+
+              <article className={styles.infoCard}>
+                <h4 className={styles.infoTitle}>Действие</h4>
+                <p className={styles.infoValue}>{selectedAction}</p>
+              </article>
+            </section>
+
+            <section className={styles.photoPane}>
               <div className={styles.moduleImageWrap}>
                 {moduleImg ? (
                   <img src={moduleImg} alt={`Узел ${moduleId}`} className={styles.moduleImage} />
@@ -243,16 +319,21 @@ function ModuleModal({ moduleId, hotspotId, relatedChannelIds, onClose }: Module
                   <div className={styles.noImage}>NO IMAGE</div>
                 )}
 
-                <HotspotsLayer
-                  hotspots={hotspots}
-                  selectedHotspotId={selectedHotspot.id}
-                  onHotspotClick={setSelectedHotspotId}
+                <ModulePhotoOverlay
+                  zones={zones.map(({ zone, title, status }) => ({ zone, title, status }))}
+                  selectedZoneKey={effectiveSelectedZoneKey}
+                  onSelectZone={setSelectedZoneKey}
                 />
               </div>
             </section>
           </div>
         ) : (
-          <div className={styles.emptyTab}>Нет данных</div>
+          <div className={styles.emptyTab}>
+            <div className={styles.emptyTabCard}>
+              <h3 className={styles.emptyTabTitle}>B24/U6/QL1C</h3>
+              <p className={styles.emptyTabText}>Нет данных</p>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -260,4 +341,3 @@ function ModuleModal({ moduleId, hotspotId, relatedChannelIds, onClose }: Module
 }
 
 export default ModuleModal
-
