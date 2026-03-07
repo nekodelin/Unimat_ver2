@@ -60,7 +60,7 @@ function buildLedData(status: BoardStatus): { yellow: boolean[]; red: boolean[] 
   }
 }
 
-export function getTabColor(status: BoardStatus): string {
+function getTabColor(status: BoardStatus): string {
   if (status === 'error') {
     return '#ff3b30'
   }

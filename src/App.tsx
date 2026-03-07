@@ -1,7 +1,12 @@
 import Layout from './components/Layout'
+import { RealtimeProvider } from './store/realtimeStore'
 
 function App() {
-  return <Layout />
+  return (
+    <RealtimeProvider>
+      <Layout />
+    </RealtimeProvider>
+  )
 }
 
 export default App

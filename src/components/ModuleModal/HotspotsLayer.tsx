@@ -8,7 +8,7 @@ export type HotspotRect = {
   h: number
 }
 
-export type HotspotVisualStatus = 'ok' | 'fault' | 'inactive'
+export type HotspotVisualStatus = 'ok' | 'fault' | 'warning' | 'inactive'
 
 export type LayerHotspot = {
   id: string
@@ -17,7 +17,7 @@ export type LayerHotspot = {
   status: HotspotVisualStatus
 }
 
-export function createHotspotStyle({ x, y, w, h }: HotspotRect): CSSProperties {
+function createHotspotStyle({ x, y, w, h }: HotspotRect): CSSProperties {
   return {
     left: `${x}%`,
     top: `${y}%`,
@@ -39,6 +39,8 @@ function HotspotsLayer({ hotspots, selectedHotspotId, onHotspotClick }: Hotspots
         const statusClass =
           hotspot.status === 'fault'
             ? styles.hotspotFault
+            : hotspot.status === 'warning'
+              ? styles.hotspotWarning
             : hotspot.status === 'inactive'
               ? styles.hotspotInactive
               : styles.hotspotOk

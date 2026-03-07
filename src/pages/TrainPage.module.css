@@ -38,6 +38,17 @@
   letter-spacing: 0.8px;
 }
 
+.loading {
+  margin-top: 8px;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #d0d0d0;
+  background-color: rgba(245, 245, 245, 0.9);
+  color: #2f2f2f;
+  font-size: 12px;
+}
+
 @media (max-width: 700px) {
   .page {
     padding: 8px;

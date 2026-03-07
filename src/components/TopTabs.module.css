@@ -1,43 +1,31 @@
 .panel {
-  flex: 0 0 60px;
-  height: 60px;
+  height: 46px;
   width: 100%;
   min-width: 0;
   display: flex;
   align-items: stretch;
-  gap: clamp(12px, 2vw, 24px);
-  padding: 0 12px 0 clamp(12px, 2vw, 24px);
-  border-radius: 12px;
-  background-color: #2b2b2b;
+  gap: 18px;
+  padding: 0 12px;
+  border: 1px solid #0f7fd8;
+  border-bottom-color: #2c2c2c;
+  background-color: #2f2f2f;
   overflow-x: auto;
-  overflow-y: hidden;
 }
 
 .tab {
   position: relative;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
-  padding: 0;
   border: 0;
   background: transparent;
-  white-space: nowrap;
-  color: #cfcfcf;
-  font-size: clamp(14px, 1.6vw, 18px);
-  font-weight: 500;
+  color: #d8d8d8;
+  font-size: 24px;
+  font-weight: 600;
   cursor: pointer;
-}
-
-.tab:focus-visible {
-  outline: 2px solid #a6ff00;
-  outline-offset: -6px;
-  border-radius: 8px;
+  white-space: nowrap;
+  padding: 0;
 }
 
 .active {
-  color: #a6ff00;
+  color: #a9f700;
 }
 
 .active::after {
@@ -45,25 +33,30 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 2px;
-  border-radius: 2px;
-  background-color: #a6ff00;
+  bottom: -1px;
+  height: 3px;
+  background-color: #a9f700;
 }
 
-.icon {
-  line-height: 1;
-  flex: 0 0 auto;
+.tab:focus-visible {
+  outline: 2px solid #a9f700;
+  outline-offset: -4px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 1200px) {
+  .tab {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 700px) {
   .panel {
-    gap: 10px;
-    padding-left: 12px;
+    gap: 12px;
+    padding: 0 8px;
   }
 
   .tab {
-    gap: 6px;
-    font-size: 14px;
+    font-size: 16px;
   }
 }
+

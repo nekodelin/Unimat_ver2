@@ -36,3 +36,4 @@ function TopTabs({ activeTab, onTabChange }: TopTabsProps) {
 }
 
 export default TopTabs
+

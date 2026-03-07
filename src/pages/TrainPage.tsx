@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import HotspotsLayer, { type LayerHotspot } from '@/components/ModuleModal/HotspotsLayer'
 import ModuleModal from '@/components/ModuleModal/ModuleModal'
-import { trainHotspots, type HotspotStatus, type TrainHotspot } from '@/data/trainHotspots'
-import { connectMockWS, type WsPayload } from '@/services/ws'
+import { statusToTone } from '@/config/statusVisual'
+import { useRealtimeStore } from '@/store/useRealtimeStore'
+import type { ChannelStatus } from '@/types/realtime'
 import styles from './TrainPage.module.css'
 
 const trainImageMap = import.meta.glob('@/assets/images/train/train.jpg', {
@@ -15,59 +16,44 @@ const trainImg = Object.values(trainImageMap)[0]
 type ModalState = {
   moduleId: string
   hotspotId: string
+  relatedChannelIds: string[]
 }
 
-function toHotspotStatus(status: 'ok' | 'warning' | 'error' | undefined): HotspotStatus {
-  if (!status) {
-    return 'inactive'
-  }
+function toHotspotStatus(status: string): 'ok' | 'fault' | 'warning' | 'inactive' {
+  const tone = statusToTone(status as ChannelStatus)
 
-  if (status === 'ok') {
+  if (tone === 'green') {
     return 'ok'
   }
 
-  return 'fault'
+  if (tone === 'red') {
+    return 'fault'
+  }
+
+  if (tone === 'warning') {
+    return 'warning'
+  }
+
+  return 'inactive'
 }
 
 function TrainPage() {
-  const [hotspots, setHotspots] = useState<TrainHotspot[]>(trainHotspots)
+  const { zones, loading } = useRealtimeStore()
   const [modalState, setModalState] = useState<ModalState | null>(null)
-
-  useEffect(() => {
-    const disconnect = connectMockWS((payload: WsPayload) => {
-      setHotspots((prevHotspots) =>
-        prevHotspots.map((hotspot) => {
-          const moduleStatus = payload.train.modules[hotspot.moduleId]?.status
-          if (!moduleStatus) {
-            return hotspot
-          }
-
-          return {
-            ...hotspot,
-            status: toHotspotStatus(moduleStatus),
-          }
-        }),
-      )
-    })
-
-    return () => {
-      disconnect()
-    }
-  }, [])
 
   const layerHotspots = useMemo<LayerHotspot[]>(
     () =>
-      hotspots.map((hotspot) => ({
-        id: hotspot.id,
-        title: hotspot.label,
-        rect: hotspot.rect,
-        status: hotspot.status,
+      zones.map((zone) => ({
+        id: zone.id,
+        title: zone.title,
+        rect: zone.rect,
+        status: toHotspotStatus(zone.status),
       })),
-    [hotspots],
+    [zones],
   )
 
-  const openModuleModal = ({ moduleId, hotspotId }: { moduleId: string; hotspotId: string }) => {
-    setModalState({ moduleId, hotspotId })
+  const openModuleModal = ({ moduleId, hotspotId, relatedChannelIds }: ModalState) => {
+    setModalState({ moduleId, hotspotId, relatedChannelIds })
   }
 
   return (
@@ -84,21 +70,29 @@ function TrainPage() {
             hotspots={layerHotspots}
             selectedHotspotId={modalState?.hotspotId}
             onHotspotClick={(hotspotId) => {
-              const selected = hotspots.find((hotspot) => hotspot.id === hotspotId)
+              const selected = zones.find((zone) => zone.id === hotspotId)
               if (!selected) {
                 return
               }
 
-              openModuleModal({ moduleId: selected.moduleId, hotspotId: selected.id })
+              openModuleModal({
+                moduleId: selected.moduleId,
+                hotspotId: selected.id,
+                relatedChannelIds: selected.channelIds,
+              })
             }}
           />
         </div>
       </section>
 
+      {loading ? <div className={styles.loading}>Загрузка состояния зон...</div> : null}
+
       {modalState ? (
         <ModuleModal
+          key={`${modalState.moduleId}-${modalState.hotspotId}`}
           moduleId={modalState.moduleId}
           hotspotId={modalState.hotspotId}
+          relatedChannelIds={modalState.relatedChannelIds}
           onClose={() => setModalState(null)}
         />
       ) : null}
@@ -107,3 +101,4 @@ function TrainPage() {
 }
 
 export default TrainPage
+

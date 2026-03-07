@@ -1,0 +1,118 @@
+.board {
+  width: 156px;
+  min-width: 156px;
+  height: 100%;
+  border: 1px solid #0f1923;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #202c3b 0%, #182332 100%);
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+.badges {
+  display: grid;
+  grid-template-columns: repeat(2, 22px);
+  gap: 14px;
+  justify-content: center;
+  padding: 10px 0 8px;
+}
+
+.badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid #fff;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 13px 12px;
+}
+
+.row {
+  min-height: 13px;
+  display: grid;
+  grid-template-columns: 12px 12px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.led {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.58);
+}
+
+.ledGreenOn {
+  background: radial-gradient(circle at 34% 30%, #d3ffc8 0%, #48cc42 35%, #1e761b 100%);
+  box-shadow:
+    0 0 0 1px rgba(102, 231, 89, 0.25),
+    0 0 5px rgba(84, 216, 72, 0.45);
+}
+
+.ledYellowOn {
+  background: radial-gradient(circle at 34% 30%, #fff4bf 0%, #f1c40f 35%, #ad8100 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 214, 0, 0.28),
+    0 0 6px rgba(255, 209, 48, 0.75);
+}
+
+.ledLeftOff {
+  background: radial-gradient(circle at 35% 32%, #707a66 0%, #4b5442 58%, #283024 100%);
+}
+
+.ledRedOff {
+  background: radial-gradient(circle at 34% 30%, #6f2724 0%, #401616 52%, #220c0c 100%);
+}
+
+.ledRedOn {
+  background: radial-gradient(circle at 33% 30%, #ffb8b4 0%, #ff4e48 34%, #be120d 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 89, 81, 0.28),
+    0 0 6px rgba(255, 55, 45, 0.75);
+}
+
+.ledInactive {
+  background: radial-gradient(circle at 34% 30%, #9a9a9a 0%, #6f6f6f 55%, #4b4b4b 100%);
+  border-color: rgba(40, 40, 40, 0.7);
+}
+
+.index {
+  justify-self: end;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.footer {
+  margin-top: auto;
+  background-color: #070c12;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: #f2f2f2;
+  text-align: center;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 1px;
+  font-weight: 700;
+  padding: 10px 6px;
+}
+
+@media (max-width: 1120px) {
+  .board {
+    height: auto;
+  }
+}

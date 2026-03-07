@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { moduleHotspotsQl6c, type ModuleHotspot } from '@/data/moduleHotspots_ql6c'
-import { connectMockWS, type WsPayload } from '@/services/ws'
+﻿import { useEffect, useMemo, useState } from 'react'
+import { statusToLabel, statusToTone } from '@/config/statusVisual'
+import { moduleHotspotsQl6c } from '@/data/moduleHotspots_ql6c'
+import { useRealtimeStore } from '@/store/useRealtimeStore'
+import type { ChannelEntity, ChannelStatus } from '@/types/realtime'
 import HotspotsLayer from './HotspotsLayer'
 import LedBoard from './LedBoard'
 import ModuleTabs, { type ModuleTabItem, type ModuleTabStatus } from './ModuleTabs'
@@ -18,74 +20,56 @@ type ModalTabId = 'b31' | 'b24'
 interface ModuleModalProps {
   moduleId: string
   hotspotId: string
+  relatedChannelIds?: string[]
   onClose: () => void
 }
 
-function toTabStatus(status: 'ok' | 'warning' | 'error' | undefined): ModuleTabStatus {
-  if (status === 'error') {
+function toTabStatus(status: ChannelStatus | undefined): ModuleTabStatus {
+  const tone = status ? statusToTone(status) : 'inactive'
+
+  if (tone === 'red') {
     return 'error'
   }
 
-  if (status === 'warning') {
+  if (tone === 'warning') {
     return 'warning'
+  }
+
+  if (tone === 'inactive') {
+    return 'inactive'
   }
 
   return 'ok'
 }
 
-function normalizeBits(bits: boolean[] | undefined): boolean[] {
-  if (!bits) {
-    return Array.from({ length: 16 }, () => false)
+function toHotspotStatus(channel: ChannelEntity | undefined): 'ok' | 'fault' | 'warning' | 'inactive' {
+  if (!channel) {
+    return 'inactive'
   }
 
-  const normalized = bits.slice(0, 16)
+  const tone = statusToTone(channel.status)
 
-  while (normalized.length < 16) {
-    normalized.push(false)
+  if (tone === 'red') {
+    return 'fault'
   }
 
-  return normalized
+  if (tone === 'warning') {
+    return 'warning'
+  }
+
+  if (tone === 'inactive') {
+    return 'inactive'
+  }
+
+  return 'ok'
 }
 
-function ModuleModal({ moduleId, hotspotId, onClose }: ModuleModalProps) {
+function ModuleModal({ moduleId, hotspotId, relatedChannelIds, onClose }: ModuleModalProps) {
+  const { channels, modules } = useRealtimeStore()
   const [activeTab, setActiveTab] = useState<ModalTabId>('b31')
-  const [yellowBits, setYellowBits] = useState<boolean[]>(Array.from({ length: 16 }, () => false))
-  const [redBits, setRedBits] = useState<boolean[]>(Array.from({ length: 16 }, () => false))
-  const [hotspots, setHotspots] = useState<ModuleHotspot[]>(moduleHotspotsQl6c)
   const [selectedHotspotId, setSelectedHotspotId] = useState<string>(
     hotspotId || moduleHotspotsQl6c[0]?.id || '',
   )
-  const [tabStatuses, setTabStatuses] = useState<Record<ModalTabId, ModuleTabStatus>>({
-    b31: 'ok',
-    b24: 'ok',
-  })
-
-  useEffect(() => {
-    setSelectedHotspotId(hotspotId || moduleHotspotsQl6c[0]?.id || '')
-  }, [hotspotId])
-
-  useEffect(() => {
-    const disconnect = connectMockWS((payload: WsPayload) => {
-      setTabStatuses({
-        b31: toTabStatus(payload.train.modules.QL6C?.status),
-        b24: toTabStatus(payload.train.modules.QL1C?.status),
-      })
-
-      setYellowBits(normalizeBits(payload.module.leds.yellow))
-      setRedBits(normalizeBits(payload.module.leds.red))
-
-      setHotspots((prevHotspots) =>
-        prevHotspots.map((hotspot) => {
-          const nextStatus = payload.module.hotspots[hotspot.id]?.status
-          return nextStatus ? { ...hotspot, status: nextStatus } : hotspot
-        }),
-      )
-    })
-
-    return () => {
-      disconnect()
-    }
-  }, [moduleId])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -101,12 +85,94 @@ function ModuleModal({ moduleId, hotspotId, onClose }: ModuleModalProps) {
     }
   }, [onClose])
 
+  const relatedChannels = useMemo(() => {
+    let sourceChannels: ChannelEntity[] = []
+
+    if (relatedChannelIds && relatedChannelIds.length > 0) {
+      sourceChannels = channels.filter((channel) => relatedChannelIds.includes(channel.id))
+    }
+
+    if (sourceChannels.length === 0) {
+      sourceChannels = channels.filter((channel) => channel.module === moduleId)
+    }
+
+    return [...sourceChannels].sort((a, b) => {
+      const photoA = a.photoIndex ?? Number.MAX_SAFE_INTEGER
+      const photoB = b.photoIndex ?? Number.MAX_SAFE_INTEGER
+      if (photoA !== photoB) {
+        return photoA - photoB
+      }
+
+      return a.id.localeCompare(b.id)
+    })
+  }, [channels, moduleId, relatedChannelIds])
+
+  const moduleStatus = modules.find((module) => module.id === moduleId)?.status
+  const secondaryModuleStatus = modules.find((module) => module.id !== moduleId)?.status
+
   const tabs: ModuleTabItem[] = useMemo(
     () => [
-      { id: 'b31', label: 'B31/U15/QL6C', status: tabStatuses.b31 },
-      { id: 'b24', label: 'B24/U6/QL1C', status: tabStatuses.b24 },
+      { id: 'b31', label: moduleId, status: toTabStatus(moduleStatus) },
+      { id: 'b24', label: modules.find((module) => module.id !== moduleId)?.id || 'N/A', status: toTabStatus(secondaryModuleStatus) },
     ],
-    [tabStatuses],
+    [moduleId, moduleStatus, modules, secondaryModuleStatus],
+  )
+
+  const yellowBits = useMemo(() => {
+    const bits = Array.from({ length: 16 }, () => false)
+
+    relatedChannels.forEach((channel, index) => {
+      const target = channel.photoIndex != null ? channel.photoIndex - 1 : index
+      const tone = statusToTone(channel.status)
+      bits[target] = tone === 'green' || tone === 'warning'
+    })
+
+    return bits
+  }, [relatedChannels])
+
+  const redBits = useMemo(() => {
+    const bits = Array.from({ length: 16 }, () => false)
+
+    relatedChannels.forEach((channel, index) => {
+      const target = channel.photoIndex != null ? channel.photoIndex - 1 : index
+      bits[target] = statusToTone(channel.status) === 'red'
+    })
+
+    return bits
+  }, [relatedChannels])
+
+  const channelsByPhotoIndex = useMemo(() => {
+    const map = new Map<number, ChannelEntity>()
+
+    relatedChannels.forEach((channel, index) => {
+      const photoIndex = channel.photoIndex ?? index + 1
+      if (!map.has(photoIndex)) {
+        map.set(photoIndex, channel)
+      }
+    })
+
+    return map
+  }, [relatedChannels])
+
+  const hotspots = useMemo(
+    () =>
+      moduleHotspotsQl6c.map((hotspot, index) => {
+        const channel =
+          (hotspot.photoIndex ? channelsByPhotoIndex.get(hotspot.photoIndex) : null) ??
+          relatedChannels[index]
+
+        return {
+          ...hotspot,
+          status: toHotspotStatus(channel),
+          info: {
+            event: channel?.title || hotspot.info.event,
+            reason: channel?.cause || hotspot.info.reason,
+            fault: channel?.stateLabel || hotspot.info.fault,
+            action: channel?.action || hotspot.info.action,
+          },
+        }
+      }),
+    [channelsByPhotoIndex, relatedChannels],
   )
 
   const selectedHotspot =
@@ -146,13 +212,25 @@ function ModuleModal({ moduleId, hotspotId, onClose }: ModuleModalProps) {
                 </article>
 
                 <article className={styles.infoCard}>
-                  <h4 className={styles.infoTitle}>Неисправность</h4>
-                  <p className={styles.infoValue}>{selectedHotspot.info.fault}</p>
+                  <h4 className={styles.infoTitle}>Действие</h4>
+                  <p className={styles.infoValue}>{selectedHotspot.info.action}</p>
                 </article>
 
                 <article className={styles.infoCard}>
-                  <h4 className={styles.infoTitle}>Действие</h4>
-                  <p className={styles.infoValue}>{selectedHotspot.info.action}</p>
+                  <h4 className={styles.infoTitle}>Связанные каналы</h4>
+                  <div className={styles.relatedList}>
+                    {relatedChannels.length === 0 ? <p className={styles.infoValue}>Нет каналов</p> : null}
+                    {relatedChannels.map((channel) => (
+                      <div key={channel.id} className={styles.relatedItem}>
+                        <p className={styles.relatedTitle}>{channel.title || channel.signalId || channel.channelKey}</p>
+                        <p className={styles.relatedMeta}>
+                          {channel.channelKey || '-'} / {channel.signalId || '-'} | status: {statusToLabel(channel.status)}
+                        </p>
+                        <p className={styles.relatedMeta}>cause: {channel.cause || '-'}</p>
+                        <p className={styles.relatedMeta}>action: {channel.action || '-'}</p>
+                      </div>
+                    ))}
+                  </div>
                 </article>
               </div>
             </aside>
@@ -160,7 +238,7 @@ function ModuleModal({ moduleId, hotspotId, onClose }: ModuleModalProps) {
             <section className={styles.rightPane}>
               <div className={styles.moduleImageWrap}>
                 {moduleImg ? (
-                  <img src={moduleImg} alt="Узел QL6C" className={styles.moduleImage} />
+                  <img src={moduleImg} alt={`Узел ${moduleId}`} className={styles.moduleImage} />
                 ) : (
                   <div className={styles.noImage}>NO IMAGE</div>
                 )}
@@ -182,3 +260,4 @@ function ModuleModal({ moduleId, hotspotId, onClose }: ModuleModalProps) {
 }
 
 export default ModuleModal
+

@@ -1,80 +1,70 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
+import { statusToLabel } from '@/config/statusVisual'
+import type { JournalEntry } from '@/types/realtime'
+import { useRealtimeStore } from '@/store/useRealtimeStore'
 import styles from './EventJournalModal.module.css'
 
-export type LogEvent = {
-  level: 'info' | 'warning' | 'error'
-  message: string
-  timestamp: string
-}
+type JournalFilter = 'all' | 'errors' | 'info'
 
 interface EventJournalModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-const infoMessages = [
-  'Плановая проверка связи',
-  'Стабилизация параметров завершена',
-  'Принят пакет телеметрии',
-]
-
-const warningMessages = [
-  'Повышенная температура блока U15',
-  'Нестабильное питание линии QL6C',
-  'Рекомендуется проверка релейной группы',
-]
-
-const errorMessages = [
-  'Потеря связи с модулем A3',
-  'Авария входа дискретного канала',
-  'Сработала критическая защита контроллера',
-]
-
-function getMessage(level: LogEvent['level']): string {
-  if (level === 'error') {
-    return errorMessages[Math.floor(Math.random() * errorMessages.length)]
-  }
-
-  if (level === 'warning') {
-    return warningMessages[Math.floor(Math.random() * warningMessages.length)]
-  }
-
-  return infoMessages[Math.floor(Math.random() * infoMessages.length)]
-}
-
-function getRandomLevel(): LogEvent['level'] {
-  const random = Math.random()
-
-  if (random < 0.15) {
-    return 'error'
-  }
-
-  if (random < 0.4) {
-    return 'warning'
-  }
-
-  return 'info'
-}
-
 function EventJournalModal({ isOpen, onClose }: EventJournalModalProps) {
-  const [logs, setLogs] = useState<LogEvent[]>([])
+  const { journal, modules, channels } = useRealtimeStore()
+  const [filter, setFilter] = useState<JournalFilter>('all')
+  const [moduleFilter, setModuleFilter] = useState<string>('all')
+  const listRef = useRef<HTMLDivElement | null>(null)
 
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      const level = getRandomLevel()
-      const nextLog: LogEvent = {
-        level,
-        message: getMessage(level),
-        timestamp: new Date().toLocaleString('ru-RU'),
+  const fallbackJournal = useMemo<JournalEntry[]>(() => {
+    return channels
+      .filter((channel) => channel.isFault)
+      .map(
+        (channel, index) =>
+          ({
+            id: `fault-${channel.id}-${channel.updatedAt || 0}-${index}`,
+            ts: channel.updatedAt || 0,
+            level: 'error',
+            module: channel.module,
+            signalId: channel.signalId,
+            title: channel.title || channel.signalId || channel.channelKey,
+            reason: channel.cause,
+            action: channel.action,
+            text: channel.stateLabel,
+            status: channel.status,
+          }) satisfies JournalEntry,
+      )
+      .sort((a, b) => b.ts - a.ts)
+  }, [channels])
+
+  const effectiveJournal = journal.length > 0 ? journal : fallbackJournal
+
+  const filteredLogs = useMemo(() => {
+    return effectiveJournal.filter((entry) => {
+      if (filter === 'errors' && entry.level !== 'error') {
+        return false
       }
 
-      setLogs((prevLogs) => [nextLog, ...prevLogs].slice(0, 200))
-    }, 4000)
+      if (filter === 'info' && entry.level !== 'info') {
+        return false
+      }
 
-    return () => {
-      window.clearInterval(intervalId)
+      if (moduleFilter !== 'all' && entry.module !== moduleFilter) {
+        return false
+      }
+
+      return true
+    })
+  }, [effectiveJournal, filter, moduleFilter])
+
+  useEffect(() => {
+    if (!isOpen || !listRef.current) {
+      return
     }
-  }, [])
+
+    listRef.current.scrollTop = 0
+  }, [isOpen, filteredLogs])
 
   if (!isOpen) {
     return null
@@ -96,13 +86,44 @@ function EventJournalModal({ isOpen, onClose }: EventJournalModalProps) {
           </button>
         </header>
 
-        <div className={styles.logList}>
-          {logs.length === 0 ? <div className={styles.empty}>События появятся автоматически...</div> : null}
+        <div className={styles.filters}>
+          <select
+            value={filter}
+            className={styles.filterSelect}
+            onChange={(event) => setFilter(event.target.value as JournalFilter)}
+          >
+            <option value="all">all</option>
+            <option value="errors">errors</option>
+            <option value="info">info</option>
+          </select>
 
-          {logs.map((log, index) => (
-            <div key={`${log.timestamp}-${index}`} className={`${styles.logItem} ${styles[log.level]}`}>
-              <span className={styles.time}>{log.timestamp}</span>
-              <span className={styles.message}>{log.message}</span>
+          <select
+            value={moduleFilter}
+            className={styles.filterSelect}
+            onChange={(event) => setModuleFilter(event.target.value)}
+          >
+            <option value="all">by module: all</option>
+            {modules.map((module) => (
+              <option key={module.id} value={module.id}>
+                {module.id}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.logList} ref={listRef}>
+          {filteredLogs.length === 0 ? <div className={styles.empty}>События отсутствуют</div> : null}
+
+          {filteredLogs.map((log) => (
+            <div key={log.id} className={`${styles.logItem} ${styles[log.level]}`}>
+              <span className={styles.time}>{new Date(log.ts).toLocaleString('ru-RU')}</span>
+              <span className={styles.message}>
+                [{log.module || '-'}] {log.signalId ? `${log.signalId}: ` : ''}
+                {log.title}
+              </span>
+              <span className={styles.status}>status: {log.status ? statusToLabel(log.status) : '-'}</span>
+              {log.reason ? <span className={styles.details}>Причина: {log.reason}</span> : null}
+              {log.action ? <span className={styles.details}>Действие: {log.action}</span> : null}
             </div>
           ))}
         </div>

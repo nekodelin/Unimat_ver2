@@ -1,64 +1,79 @@
-import FaultPanel from '@/components/FaultPanel'
-import LedBoardPanel from '@/components/LedBoardPanel'
-import SignalList, { type SignalItem } from '@/components/SignalList'
+import { useMemo, useState } from 'react'
+import ConnectionBanner from '@/components/common/ConnectionBanner'
+import EventJournalModal from '@/components/EventJournalModal'
+import { useRealtimeStore } from '@/store/useRealtimeStore'
+import TechnicalMatrix from './TechnicalMatrix'
+import { buildTechnicalModuleTabs, buildTechnicalRows } from './technicalAdapter'
 import styles from './TechnicalPage.module.css'
 
-const errors: string[] = []
-
-const signals: SignalItem[] = [
-  { index: '0', text: '1s201a Подъем ПРУ слева' },
-  { index: '1', text: '1s201b Опускание ПРУ слева' },
-  { index: '2', text: '1s202b Подъем ПРУ справа' },
-  { index: '3', text: 's1202b Опускание ПРУ справа' },
-  { index: '4', text: '1s212b Крюч слева выдвинуть' },
-  { index: '5', text: '1s212a Крюч слева задвинуть' },
-  { index: '6', text: '1s213b Крюч справа выдвинуть' },
-  { index: '7', text: '1s213a Крюч справа задвинуть' },
-  { index: '8', text: '1s247b Левый роликовый захват снаружи открыть' },
-  { index: '9', text: '1s247a Левый роликовый захват снаружи закрыть' },
-  { index: 'A', text: '1s248b Левый роликовый захват внутри открыть' },
-  { index: 'B', text: '1s248a Левый роликовый захват внутри закрыть' },
-  { index: 'C', text: '' },
-  { index: 'D', text: '' },
-  { index: 'E', text: '' },
-  { index: 'F', text: '' },
-]
-
 function TechnicalPage() {
+  const [journalOpen, setJournalOpen] = useState(false)
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null)
+  const {
+    channels,
+    modules,
+    summary,
+    connectionStatus,
+    lastUpdateAt,
+    error,
+    reconnect,
+    loading,
+    demoMode,
+  } = useRealtimeStore()
+
+  const moduleTabs = useMemo(
+    () => buildTechnicalModuleTabs(modules, summary.moduleStatus).slice(0, 2),
+    [modules, summary.moduleStatus],
+  )
+
+  const activeModuleId =
+    selectedModuleId && moduleTabs.some((module) => module.id === selectedModuleId)
+      ? selectedModuleId
+      : (moduleTabs[0]?.id ?? null)
+  const activeTab = moduleTabs.find((module) => module.id === activeModuleId) ?? moduleTabs[0] ?? null
+  const activeRows = useMemo(
+    () => buildTechnicalRows(channels, activeTab?.id ?? ''),
+    [channels, activeTab?.id],
+  )
+  const activeFaultCount = activeRows.filter((row) => row.status === 'fault').length
+
   return (
     <section className={styles.page}>
-      <div className={styles.layout}>
-        <aside className={styles.journalPanel} aria-label="Журнал событий">
-          <div className={styles.journalIcon} aria-hidden="true">
-            <span className={styles.journalIconLine} />
-            <span className={styles.journalIconLine} />
-            <span className={styles.journalIconLine} />
+      <ConnectionBanner status={connectionStatus} lastUpdateAt={lastUpdateAt} error={error} onRetry={reconnect} />
+
+      {loading ? <div className={styles.loading}>Загрузка данных...</div> : null}
+      {demoMode ? <div className={styles.demoBadge}>demo-mode</div> : null}
+
+      {import.meta.env.DEV ? (
+        <section className={styles.debugPanel} aria-label="Debug panel">
+          <div className={styles.debugRow}>connection: {connectionStatus}</div>
+          <div className={styles.debugRow}>
+            last update: {lastUpdateAt ? new Date(lastUpdateAt).toLocaleString('ru-RU') : '-'}
           </div>
-          <div className={styles.journalText}>ЖУРНАЛ СОБЫТИЙ</div>
-          <div className={styles.journalArrow} aria-hidden="true" />
-        </aside>
-
-        <div className={styles.signalColumn}>
-          <div className={styles.boardTabs} role="tablist" aria-label="Плата">
-            <button type="button" className={`${styles.boardTab} ${styles.boardTabActive}`} aria-selected="true">
-              B31/U15/QL6C
-            </button>
-            <button type="button" className={`${styles.boardTab} ${styles.boardTabInactive}`} aria-selected="false">
-              B24/U6/QL1C
-            </button>
+          <div className={styles.debugRow}>faultCount: {summary.faultCount}</div>
+          <div className={styles.debugRow}>warningCount: {summary.warningCount}</div>
+          <div className={styles.debugRow}>normalCount: {summary.normalCount}</div>
+          <div className={styles.debugList}>
+            {channels.map((channel) => (
+              <div key={`debug-${channel.id}`} className={styles.debugItem}>
+                {channel.channelKey || channel.signalId || '-'}: {channel.status}
+              </div>
+            ))}
           </div>
+        </section>
+      ) : null}
 
-          <SignalList items={signals} errors={errors} />
-        </div>
+      <TechnicalMatrix
+        moduleTabs={moduleTabs}
+        activeModuleId={activeTab?.id ?? null}
+        moduleStatus={activeTab?.status ?? 'inactive'}
+        rows={activeRows}
+        faultCount={activeFaultCount}
+        onSelectModule={setSelectedModuleId}
+        onOpenJournal={() => setJournalOpen(true)}
+      />
 
-        <aside className={styles.ledColumn}>
-          <LedBoardPanel errors={errors} />
-        </aside>
-
-        <aside className={styles.faultColumn}>
-          <FaultPanel errors={errors} />
-        </aside>
-      </div>
+      <EventJournalModal isOpen={journalOpen} onClose={() => setJournalOpen(false)} />
     </section>
   )
 }

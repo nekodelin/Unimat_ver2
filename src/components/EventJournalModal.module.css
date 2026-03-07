@@ -30,6 +30,25 @@
   background-color: #e8e8e8;
 }
 
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #d8d8d8;
+  background-color: #f1f1f1;
+}
+
+.filterSelect {
+  min-width: 130px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #c8c8c8;
+  background-color: #fff;
+  color: #262626;
+  font-size: 13px;
+  padding: 0 8px;
+}
+
 .title {
   margin: 0;
   font-size: 18px;
@@ -84,6 +103,18 @@
   font-size: 14px;
 }
 
+.status {
+  color: #3d3d3d;
+  font-size: 12px;
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+.details {
+  color: #2f2f2f;
+  font-size: 13px;
+  width: 100%;
+}
+
 .info {
   background-color: #e4e4e4;
   border-color: #d2d2d2;
@@ -102,6 +133,10 @@
 @media (max-width: 640px) {
   .overlay {
     padding: 12px;
+  }
+
+  .filters {
+    flex-direction: column;
   }
 
   .header {

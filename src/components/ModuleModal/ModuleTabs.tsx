@@ -1,6 +1,6 @@
 import styles from './moduleModal.module.css'
 
-export type ModuleTabStatus = 'ok' | 'warning' | 'error'
+export type ModuleTabStatus = 'ok' | 'warning' | 'error' | 'inactive'
 
 export interface ModuleTabItem {
   id: string
@@ -24,6 +24,8 @@ function ModuleTabs({ tabs, activeTabId, onTabChange }: ModuleTabsProps) {
             ? styles.tabError
             : tab.status === 'warning'
               ? styles.tabWarning
+              : tab.status === 'inactive'
+                ? styles.tabInactive
               : styles.tabOk
 
         return (
