@@ -5,26 +5,30 @@
   background: rgba(10, 12, 16, 0.62);
   display: grid;
   place-items: center;
-  padding: 1rem;
+  padding: clamp(0.6rem, 2vw, 1rem);
 }
 
 .card {
   width: min(92vw, 24rem);
+  max-height: min(85vh, 24rem);
+  overflow: auto;
   border-radius: 0.75rem;
   background: #f8f8f8;
   border: 1px solid #c9c9c9;
   box-shadow: 0 0.8rem 2rem rgba(0, 0, 0, 0.2);
-  padding: 1rem;
+  padding: clamp(0.75rem, 1.8vw, 1rem);
 }
 
 .card h3 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: clamp(1rem, 2vw, 1.15rem);
 }
 
 .card p {
-  margin: 0.45rem 0 1rem;
+  margin: clamp(0.35rem, 0.9vw, 0.45rem) 0 clamp(0.7rem, 1.6vw, 1rem);
   color: #424242;
+  font-size: clamp(0.86rem, 1.45vw, 1rem);
+  line-height: 1.35;
 }
 
 .card button {
@@ -32,7 +36,7 @@
   border-radius: 0.45rem;
   background: #d0ff00;
   color: #1f1f1f;
-  height: 2.1rem;
+  height: clamp(2rem, 3.4vh, 2.1rem);
   padding: 0 0.8rem;
   font-weight: 700;
   cursor: pointer;

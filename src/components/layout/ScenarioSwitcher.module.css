@@ -1,20 +1,21 @@
-﻿.root {
+.root {
   position: fixed;
-  right: 1rem;
-  bottom: 1rem;
+  right: clamp(0.6rem, 1.2vw, 1rem);
+  bottom: clamp(0.6rem, 1.2vw, 1rem);
   z-index: 40;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid #cfd2d5;
   border-radius: 0.75rem;
-  padding: 0.55rem 0.65rem;
+  padding: clamp(0.45rem, 1vw, 0.55rem) clamp(0.55rem, 1vw, 0.65rem);
   box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.12);
   display: grid;
   gap: 0.3rem;
-  min-width: 11.5rem;
+  min-width: clamp(10rem, 18vw, 11.5rem);
+  max-width: min(94vw, 16rem);
 }
 
 .label {
-  font-size: 0.72rem;
+  font-size: clamp(0.68rem, 1.2vw, 0.72rem);
   font-weight: 600;
   color: #353535;
 }
@@ -24,8 +25,9 @@
   border-radius: 0.35rem;
   background: #fff;
   color: #1f1f1f;
-  height: 2rem;
+  height: clamp(1.85rem, 3.4vh, 2rem);
   padding: 0 0.45rem;
+  min-width: 0;
 }
 
 @media (max-width: 700px) {
@@ -33,6 +35,7 @@
     left: 0.6rem;
     right: 0.6rem;
     bottom: 0.6rem;
-    min-width: unset;
+    min-width: 0;
+    max-width: none;
   }
 }

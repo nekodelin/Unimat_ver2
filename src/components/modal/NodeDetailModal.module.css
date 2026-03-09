@@ -418,7 +418,7 @@
       'board'
       'info'
       'photo';
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
     padding: 0.45rem;
   }
 
@@ -431,28 +431,209 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 768px) {
+  .backdrop {
+    padding: 0;
+  }
+
+  .dialog {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0.3rem;
+  }
+
   .dialogHeader {
-    padding: 0.3rem 0.38rem;
+    gap: 0.3rem;
+    padding: 0.2rem 0.28rem;
   }
 
   .closeButton {
-    min-width: 5.4rem;
-    height: 1.9rem;
-    border-radius: 0.5rem;
-    font-size: 0.82rem;
+    min-width: clamp(4.8rem, 17vw, 5.6rem);
+    height: clamp(1.6rem, 3.2vh, 1.9rem);
+    border-radius: 0.4rem;
+    font-size: clamp(0.72rem, 1.6vh, 0.84rem);
+    padding: 0 clamp(0.45rem, 1.6vw, 0.62rem);
   }
 
   .content {
-    padding: 0.35rem;
-    gap: 0.4rem;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'board'
+      'info'
+      'photo';
+    grid-template-rows: auto auto auto;
+    align-content: start;
+    padding: clamp(0.2rem, 0.7vw, 0.3rem);
+    gap: clamp(0.25rem, 0.9vw, 0.4rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .boardPanelWrap {
+    height: auto;
+    max-height: none;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+
+  .boardPanel {
+    height: auto;
+    max-height: none;
+  }
+
+  .boardHeader {
+    justify-content: center;
+    gap: clamp(2px, 0.35vh, 4px);
+    padding: clamp(2px, 0.45vh, 4px) clamp(3px, 0.6vh, 6px) clamp(1px, 0.2vh, 2px);
+  }
+
+  .boardHeadBadge {
+    width: clamp(16px, 2vh, 24px);
+    height: clamp(16px, 2vh, 24px);
+    border-width: clamp(1px, 0.12vh, 1.4px);
+    font-size: clamp(10px, 1.1vh, 13px);
+  }
+
+  .channelList {
+    flex: 0 0 auto;
+    padding: clamp(1px, 0.2vh, 3px) clamp(3px, 0.55vh, 6px) 0;
+    gap: clamp(1px, 0.2vh, 3px);
+    overflow: visible;
+  }
+
+  .channelButton {
+    min-height: clamp(18px, 2.2vh, 24px);
+    height: clamp(18px, 2.2vh, 24px);
+    gap: clamp(3px, 0.45vh, 6px);
+    padding: 0 clamp(3px, 0.55vh, 5px);
+  }
+
+  .ledGroup {
+    gap: clamp(2px, 0.3vh, 4px);
+  }
+
+  .led {
+    width: clamp(6px, 0.9vh, 10px);
+    height: clamp(6px, 0.9vh, 10px);
+    border-width: clamp(1px, 0.12vh, 1.5px);
+  }
+
+  .channelCode {
+    font-size: clamp(10px, 1.2vh, 14px);
+  }
+
+  .boardFooter {
+    padding: clamp(2px, 0.35vh, 4px) 0.25rem;
+    font-size: clamp(10px, 1.2vh, 13px);
+    letter-spacing: 0.02em;
   }
 
   .infoCard {
-    padding: 0.45rem;
+    min-height: 0;
+    padding: clamp(0.32rem, 0.9vw, 0.44rem);
+    overflow: visible;
+  }
+
+  .infoHead {
+    gap: 0.32rem;
+  }
+
+  .infoHead h3 {
+    font-size: clamp(0.92rem, 2.2vh, 1.18rem);
+  }
+
+  .statusTag {
+    font-size: clamp(0.62rem, 1.35vh, 0.74rem);
+    padding: 0.13rem 0.42rem;
+  }
+
+  .infoGrid {
+    margin-top: clamp(0.3rem, 0.7vh, 0.45rem);
+    gap: clamp(0.22rem, 0.45vh, 0.34rem);
+  }
+
+  .infoGrid dt {
+    font-size: clamp(0.7rem, 1.45vh, 0.86rem);
+  }
+
+  .infoGrid dd {
+    font-size: clamp(0.78rem, 1.65vh, 0.98rem);
+    line-height: 1.2;
+  }
+
+  .hint {
+    margin-top: clamp(0.3rem, 0.7vh, 0.42rem);
+    font-size: clamp(0.66rem, 1.3vh, 0.8rem);
   }
 
   .photoPanel {
-    min-height: clamp(13.5rem, 40vh, 21rem);
+    min-height: clamp(8.5rem, 24vh, 12.5rem);
+  }
+
+  .photoViewport {
+    aspect-ratio: 1063.52 / 830.013;
+    height: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .dialog {
+    border-radius: 0.2rem;
+  }
+
+  .dialogHeader {
+    padding: 0.16rem 0.22rem;
+  }
+
+  .closeButton {
+    min-width: 4.55rem;
+    height: 1.5rem;
+    border-radius: 0.42rem;
+    font-size: 0.7rem;
+  }
+
+  .content {
+    padding: 0.14rem;
+    gap: 0.2rem;
+  }
+
+  .boardHeadBadge {
+    width: clamp(16px, 1.8vh, 22px);
+    height: clamp(16px, 1.8vh, 22px);
+    font-size: clamp(10px, 1.1vh, 12px);
+  }
+
+  .channelButton {
+    min-height: clamp(18px, 2vh, 22px);
+    height: clamp(18px, 2vh, 22px);
+    gap: clamp(3px, 0.4vh, 5px);
+  }
+
+  .led {
+    width: clamp(6px, 0.8vh, 9px);
+    height: clamp(6px, 0.8vh, 9px);
+  }
+
+  .channelCode {
+    font-size: clamp(10px, 1.1vh, 13px);
+  }
+
+  .boardFooter {
+    padding: 2px 0.22rem;
+    font-size: clamp(9px, 1vh, 12px);
+  }
+
+  .infoCard {
+    padding: 0.28rem;
+  }
+
+  .photoPanel {
+    min-height: clamp(7.8rem, 21vh, 10.8rem);
   }
 }

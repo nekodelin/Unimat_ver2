@@ -1,6 +1,8 @@
 .host {
   position: absolute;
   inset: 0;
+  min-width: 0;
+  min-height: 0;
   pointer-events: none;
   z-index: 80;
 }
@@ -18,7 +20,7 @@
 
 .dockTrigger img {
   display: block;
-  width: 6.4rem;
+  width: clamp(4.8rem, 6.2vw, 6.4rem);
   height: auto;
 }
 
@@ -39,31 +41,34 @@
 
 .panel {
   position: fixed;
-  top: 4.75rem;
-  left: 0.45rem;
-  width: min(39rem, calc(100vw - 0.9rem));
-  height: calc(100dvh - 5.2rem);
-  max-height: none;
+  top: clamp(3.9rem, 6.2vh, 4.75rem);
+  left: clamp(0.3rem, 0.6vw, 0.45rem);
+  width: min(39rem, calc(100vw - clamp(0.6rem, 1.2vw, 0.9rem)));
+  height: min(calc(100dvh - clamp(4.35rem, 6.7vh, 5.2rem)), 96dvh);
+  max-height: calc(100dvh - clamp(0.6rem, 1.2vw, 0.9rem));
+  min-width: 0;
+  min-height: 0;
   background: #e3e3e3;
   border: 1px solid #b8bdc4;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
 }
 
 .header {
-  min-height: 5.5rem;
+  min-height: clamp(3.8rem, 8vh, 5.5rem);
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   border-bottom: 1px solid #c3c7cf;
   background: #e3e3e3;
 }
 
 .logoWrap {
   display: grid;
+  min-width: 0;
   align-content: center;
-  gap: 0.35rem;
-  padding: 0.75rem 0.95rem;
+  gap: clamp(0.2rem, 0.45vh, 0.35rem);
+  padding: clamp(0.5rem, 1.2vw, 0.95rem);
 }
 
 .logoBadge {
@@ -71,25 +76,29 @@
   border-radius: 0.22rem;
   background: #d0ff00;
   color: #12141a;
-  font-size: 0.85rem;
+  font-size: clamp(0.7rem, 1.2vw, 0.85rem);
   font-weight: 700;
   padding: 0.1rem 0.35rem;
 }
 
 .logoTitle {
-  font-size: 2.2rem;
+  font-size: clamp(1.1rem, 3vw, 2.2rem);
   font-weight: 700;
   line-height: 0.95;
   color: #2b2d32;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .collapseButton {
-  width: 3rem;
+  width: clamp(2.3rem, 4.6vw, 3rem);
+  min-width: clamp(2.3rem, 4.6vw, 3rem);
   border: none;
   color: #ffffff;
   background: #2a2a2a;
   cursor: pointer;
-  font-size: 2rem;
+  font-size: clamp(1.2rem, 2.9vw, 2rem);
   line-height: 1;
 }
 
@@ -97,25 +106,26 @@
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 1.1rem;
-  padding: 2rem 1.25rem;
+  gap: clamp(0.7rem, 1.8vh, 1.1rem);
+  padding: clamp(1rem, 2.4vh, 2rem) clamp(0.85rem, 2vw, 1.25rem);
 }
 
 .introScreen p {
   margin: 0;
   color: #32353c;
-  font-size: 1.05rem;
+  font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+  text-align: center;
 }
 
 .authScreen {
   display: grid;
-  gap: 0.95rem;
-  padding: 1rem;
+  gap: clamp(0.55rem, 1.5vh, 0.95rem);
+  padding: clamp(0.65rem, 1.7vh, 1rem);
 }
 
 .field {
   display: grid;
-  grid-template-columns: 13.3rem 1fr;
+  grid-template-columns: clamp(8.2rem, 35%, 13.3rem) minmax(0, 1fr);
   align-items: stretch;
   border-radius: 0.8rem;
   overflow: hidden;
@@ -126,17 +136,19 @@
   color: #f2f2f2;
   display: flex;
   align-items: center;
-  padding: 0 1.1rem;
-  font-size: 2rem;
+  padding: 0 clamp(0.55rem, 1.2vw, 1.1rem);
+  font-size: clamp(0.86rem, 1.5vw, 1.3rem);
 }
 
 .field input {
+  width: 100%;
+  min-width: 0;
   border: none;
   background: #d5d5d5;
   color: #16181c;
-  padding: 0 1.05rem;
-  min-height: 3.7rem;
-  font-size: 2rem;
+  padding: 0 clamp(0.6rem, 1.2vw, 1.05rem);
+  min-height: clamp(2.5rem, 5vh, 3.7rem);
+  font-size: clamp(0.9rem, 1.7vw, 1.25rem);
   outline: none;
 }
 
@@ -156,9 +168,9 @@
 .exitButton {
   border: none;
   border-radius: 0.8rem;
-  min-height: 3.1rem;
-  padding: 0 1rem;
-  font-size: 2.9rem;
+  min-height: clamp(2.5rem, 4.3vh, 3.1rem);
+  padding: 0 clamp(0.75rem, 1.5vw, 1rem);
+  font-size: clamp(0.95rem, 1.9vw, 1.25rem);
   cursor: pointer;
 }
 
@@ -177,85 +189,98 @@
 
 .modeScreen {
   display: grid;
-  gap: 0.95rem;
-  padding: 1rem;
+  gap: clamp(0.55rem, 1.5vh, 0.95rem);
+  padding: clamp(0.65rem, 1.7vh, 1rem);
   align-content: start;
 }
 
 .periodCard {
   background: #2a2a2a;
   border-radius: 0.8rem;
-  padding: 0.7rem;
+  padding: clamp(0.55rem, 1.2vh, 0.7rem);
   display: grid;
-  gap: 0.7rem;
+  gap: clamp(0.45rem, 1vh, 0.7rem);
 }
 
 .periodCard label {
   color: #d5d5d5;
-  font-size: 1.9rem;
+  font-size: clamp(0.9rem, 1.7vw, 1.15rem);
 }
 
 .periodCard input {
+  width: 100%;
+  min-width: 0;
   border: none;
   border-radius: 0.8rem;
-  min-height: 2.9rem;
+  min-height: clamp(2.4rem, 3.8vh, 2.9rem);
   background: #d5d5d5;
   color: #1f2126;
-  padding: 0 0.9rem;
-  font-size: 2rem;
+  padding: 0 clamp(0.6rem, 1.2vw, 0.9rem);
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
   outline: none;
 }
 
 .exitButton {
   justify-self: end;
-  min-width: 10.6rem;
+  min-width: clamp(7.2rem, 26vw, 10.6rem);
 }
 
 .journalScreen {
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 .toolbar {
+  min-width: 0;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  gap: 0.55rem;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto auto;
+  gap: clamp(0.3rem, 0.8vw, 0.55rem);
   align-items: center;
-  padding: 0.6rem;
+  padding: clamp(0.35rem, 0.9vw, 0.6rem);
   background: #e3e3e3;
   border-bottom: 1px solid #c3c7cf;
 }
 
 .toolbarMode {
+  min-width: 0;
   border-radius: 0.7rem;
   background: #2a2a2a;
   color: #f1f1f2;
-  min-height: 2.8rem;
+  min-height: clamp(2.2rem, 3.8vh, 2.8rem);
   display: flex;
   align-items: center;
-  padding: 0 0.8rem;
-  font-size: 1rem;
+  padding: 0 clamp(0.5rem, 1.1vw, 0.8rem);
+  font-size: clamp(0.78rem, 1.2vw, 1rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .toolbarPeriod {
+  min-width: 0;
   border-radius: 0.7rem;
   background: #d5d5d5;
   color: #181a1f;
-  min-height: 2.8rem;
+  min-height: clamp(2.2rem, 3.8vh, 2.8rem);
   display: flex;
   align-items: center;
-  padding: 0 0.9rem;
-  font-size: 1rem;
+  padding: 0 clamp(0.55rem, 1.2vw, 0.9rem);
+  font-size: clamp(0.78rem, 1.2vw, 1rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .downloadButton,
 .toolbarButton {
-  min-height: 2.8rem;
+  min-height: clamp(2.2rem, 3.8vh, 2.8rem);
   border-radius: 0.7rem;
-  font-size: 0.92rem;
+  font-size: clamp(0.72rem, 1.1vw, 0.92rem);
   font-weight: 600;
-  padding: 0 0.85rem;
+  padding: 0 clamp(0.55rem, 1vw, 0.85rem);
+  white-space: nowrap;
 }
 
 .toolbarButton {
@@ -271,59 +296,80 @@
 }
 
 .tableHead {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 5.4rem 6rem 4rem 1fr;
-  gap: 0.4rem;
+  grid-template-columns: clamp(4rem, 16vw, 5.4rem) clamp(4.3rem, 19vw, 6rem) clamp(2.8rem, 11vw, 4rem) minmax(0, 1fr);
+  gap: clamp(0.2rem, 0.55vw, 0.4rem);
   align-items: center;
-  padding: 0.4rem 0.6rem;
+  padding: clamp(0.3rem, 0.65vw, 0.4rem) clamp(0.35rem, 0.9vw, 0.6rem);
   background: #d6d6d6;
   border-bottom: 1px solid #bec3cb;
-  font-size: 0.8rem;
+  font-size: clamp(0.68rem, 0.95vw, 0.8rem);
   font-weight: 700;
   color: #1e2025;
 }
 
+.tableHead span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tableBody {
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
   background: #2a2a2a;
-  padding: 0.35rem;
+  padding: clamp(0.25rem, 0.6vw, 0.35rem);
   display: grid;
-  gap: 0.35rem;
+  gap: clamp(0.2rem, 0.5vw, 0.35rem);
 }
 
 .eventRow {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 5.4rem 6rem 4rem 1fr;
-  gap: 0.4rem;
+  grid-template-columns: clamp(4rem, 16vw, 5.4rem) clamp(4.3rem, 19vw, 6rem) clamp(2.8rem, 11vw, 4rem) minmax(0, 1fr);
+  gap: clamp(0.2rem, 0.55vw, 0.4rem);
   align-items: start;
-  padding: 0.38rem 0.45rem;
-  border-radius: 0.36rem;
+  padding: clamp(0.28rem, 0.55vw, 0.45rem);
+  border-radius: clamp(0.24rem, 0.45vw, 0.36rem);
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 0.79rem;
+  font-size: clamp(0.68rem, 0.9vw, 0.79rem);
 }
 
 .eventTime {
   color: #d4d6da;
+  white-space: nowrap;
 }
 
 .eventSource {
   color: #85e454;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .eventChannel {
   color: #d4ff00;
+  white-space: nowrap;
+}
+
+.eventContent {
+  min-width: 0;
 }
 
 .eventContent strong {
   display: block;
   color: #ff4d4d;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .eventContent p {
   margin: 0.13rem 0 0;
   color: #d4d6da;
+  overflow-wrap: anywhere;
 }
 
 .eventError {
@@ -338,25 +384,44 @@
   background: rgba(27, 66, 42, 0.36);
 }
 
-@media (max-width: 900px) {
-  .dockTrigger {
-    left: 0;
+@media (max-width: 1200px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
+  .toolbarMode,
+  .toolbarPeriod {
+    grid-column: 1 / -1;
+  }
+
+  .toolbarButton {
+    grid-column: 1;
+  }
+
+  .downloadButton {
+    grid-column: 2;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 900px) {
   .dockTrigger img {
-    width: 5.2rem;
-    height: auto;
+    width: clamp(4rem, 15vw, 5.2rem);
   }
 
   .panel {
-    top: 3.95rem;
-    left: 0.3rem;
-    width: min(31rem, calc(100vw - 0.6rem));
-    height: calc(100dvh - 4.3rem);
+    top: clamp(3.55rem, 6vh, 3.95rem);
+    left: 0.25rem;
+    width: min(31rem, calc(100vw - 0.5rem));
+    height: min(calc(100dvh - clamp(3.9rem, 6.2vh, 4.3rem)), 97dvh);
+  }
+
+  .header {
+    min-height: clamp(3.2rem, 8.5vh, 4.3rem);
   }
 
   .logoTitle {
-    font-size: 1.5rem;
+    font-size: clamp(1rem, 4.8vw, 1.5rem);
   }
 
   .field {
@@ -364,13 +429,13 @@
   }
 
   .field span {
-    min-height: 2.2rem;
-    font-size: 1.2rem;
+    min-height: clamp(2rem, 3.8vh, 2.2rem);
+    font-size: clamp(0.95rem, 2.8vw, 1.2rem);
   }
 
   .field input {
-    min-height: 2.5rem;
-    font-size: 1.1rem;
+    min-height: clamp(2.3rem, 4.4vh, 2.5rem);
+    font-size: clamp(0.95rem, 2.5vw, 1.1rem);
   }
 
   .primaryButton,
@@ -379,17 +444,52 @@
   .downloadButton,
   .modeCurrentButton,
   .exitButton {
-    font-size: 1.1rem;
-    min-height: 2.5rem;
+    font-size: clamp(0.95rem, 3.3vw, 1.1rem);
+    min-height: clamp(2.35rem, 4.6vh, 2.5rem);
   }
 
   .toolbar {
     grid-template-columns: 1fr;
   }
 
+  .toolbarButton,
+  .downloadButton {
+    width: 100%;
+    justify-self: stretch;
+  }
+
   .tableHead,
   .eventRow {
-    grid-template-columns: 4.8rem 4rem 2.7rem 1fr;
-    font-size: 0.7rem;
+    grid-template-columns: clamp(3.8rem, 18vw, 4.8rem) clamp(3.2rem, 16vw, 4rem) clamp(2.4rem, 11vw, 2.8rem) minmax(0, 1fr);
+    font-size: clamp(0.65rem, 2vw, 0.72rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .panel {
+    top: 3.35rem;
+    left: 0.175rem;
+    width: calc(100vw - 0.35rem);
+    height: min(calc(100dvh - 3.65rem), 97dvh);
+  }
+
+  .logoWrap {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .collapseButton {
+    width: 2rem;
+    min-width: 2rem;
+    font-size: 1.1rem;
+  }
+
+  .tableHead,
+  .eventRow {
+    grid-template-columns: 3.4rem 3rem 2rem minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+
+  .eventRow {
+    font-size: clamp(0.62rem, 1.9vw, 0.68rem);
   }
 }
