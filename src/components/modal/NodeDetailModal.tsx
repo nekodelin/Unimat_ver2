@@ -151,61 +151,66 @@ export function NodeDetailModal({
         aria-modal="true"
         aria-label="Карточка состояния узла"
       >
-        <button type="button" className={styles.closeButton} onClick={onClose}>
-          Закрыть
-        </button>
+        <header className={styles.dialogHeader}>
+          <div className={styles.dialogSpacer} aria-hidden="true" />
+          <button type="button" className={styles.closeButton} onClick={onClose}>
+            Закрыть
+          </button>
+        </header>
 
         <div className={styles.content}>
-          <aside className={styles.boardPanel}>
-            <div className={styles.boardHeader}>
-              <span className={styles.boardHeadBadge}>1</span>
-              <span className={styles.boardHeadBadge}>0</span>
-            </div>
+          <div className={styles.boardPanelWrap}>
+            <aside className={styles.boardPanel}>
+              <div className={styles.boardHeader}>
+                <span className={styles.boardHeadBadge}>1</span>
+                <span className={styles.boardHeadBadge}>0</span>
+              </div>
 
-            <ul className={styles.channelList}>
-              {NODE_WINDOW_ELEMENTS.map((element) => {
-                const channel = channelByZoneId.get(element.zoneId)
-                const zoneStatus = channel?.status ?? zoneStateMap.get(element.zoneId)?.status ?? 'inactive'
-                const selected = element.zoneId === activeZoneId
-                const hovered = element.zoneId === hoveredZoneId
-                const ledState = resolveNodeLedState(zoneStatus)
+              <ul className={styles.channelList}>
+                {NODE_WINDOW_ELEMENTS.map((element) => {
+                  const channel = channelByZoneId.get(element.zoneId)
+                  const zoneStatus = channel?.status ?? zoneStateMap.get(element.zoneId)?.status ?? 'inactive'
+                  const selected = element.zoneId === activeZoneId
+                  const hovered = element.zoneId === hoveredZoneId
+                  const ledState = resolveNodeLedState(zoneStatus)
 
-                return (
-                  <li key={element.id}>
-                    <button
-                      type="button"
-                      className={`${styles.channelButton} ${selected ? styles.channelButtonSelected : ''} ${
-                        hovered ? styles.channelButtonHovered : ''
-                      }`}
-                      onClick={() => selectZone(element.zoneId)}
-                      onMouseEnter={() => setHoveredZoneId(element.zoneId)}
-                      onMouseLeave={() => setHoveredZoneId(null)}
-                      onFocus={() => setHoveredZoneId(element.zoneId)}
-                      onBlur={() => setHoveredZoneId(null)}
-                      aria-pressed={selected}
-                      title={`${channel?.channelKey ?? element.channelKey} | ${channel?.signalId ?? element.backendSignalId}`}
-                    >
-                      <span className={styles.ledGroup}>
-                        <span
-                          className={`${styles.led} ${
-                            ledState === 'off' ? styles.ledYellowOff : styles.ledYellowOn
-                          } ${selected ? styles.ledSelected : ''}`}
-                        />
-                        <span
-                          className={`${styles.led} ${
-                            ledState === 'yellow-red' ? styles.ledRedOn : styles.ledRedOff
-                          } ${selected ? styles.ledSelected : ''}`}
-                        />
-                      </span>
-                      <span className={styles.channelCode}>{element.channel}</span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
+                  return (
+                    <li key={element.id}>
+                      <button
+                        type="button"
+                        className={`${styles.channelButton} ${selected ? styles.channelButtonSelected : ''} ${
+                          hovered ? styles.channelButtonHovered : ''
+                        }`}
+                        onClick={() => selectZone(element.zoneId)}
+                        onMouseEnter={() => setHoveredZoneId(element.zoneId)}
+                        onMouseLeave={() => setHoveredZoneId(null)}
+                        onFocus={() => setHoveredZoneId(element.zoneId)}
+                        onBlur={() => setHoveredZoneId(null)}
+                        aria-pressed={selected}
+                        title={`${channel?.channelKey ?? element.channelKey} | ${channel?.signalId ?? element.backendSignalId}`}
+                      >
+                        <span className={styles.ledGroup}>
+                          <span
+                            className={`${styles.led} ${
+                              ledState === 'off' ? styles.ledYellowOff : styles.ledYellowOn
+                            } ${selected ? styles.ledSelected : ''}`}
+                          />
+                          <span
+                            className={`${styles.led} ${
+                              ledState === 'yellow-red' ? styles.ledRedOn : styles.ledRedOff
+                            } ${selected ? styles.ledSelected : ''}`}
+                          />
+                        </span>
+                        <span className={styles.channelCode}>{element.channel}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
 
-            <div className={styles.boardFooter}>{activeChannel?.moduleKey ?? 'QL6C'}</div>
-          </aside>
+              <div className={styles.boardFooter}>{activeChannel?.moduleKey ?? 'QL6C'}</div>
+            </aside>
+          </div>
 
           <section className={styles.infoPanel}>
             <article className={styles.infoCard}>
@@ -235,42 +240,44 @@ export function NodeDetailModal({
           </section>
 
           <section className={styles.photoPanel}>
-            <img className={styles.photoImage} src={nodeBackgroundSvg} alt="Расположение узлов QL6C" />
-            <svg
-              className={styles.hotspotLayer}
-              viewBox={`0 0 ${NODE_WINDOW_PHOTO_FRAME.width} ${NODE_WINDOW_PHOTO_FRAME.height}`}
-              aria-label="Интерактивные зоны узла"
-            >
-              <g transform={`translate(-${NODE_WINDOW_PHOTO_FRAME.x} -${NODE_WINDOW_PHOTO_FRAME.y})`}>
-                {NODE_WINDOW_HOTSPOTS.map((hotspot) => {
-                  const channel = channelByZoneId.get(hotspot.zoneId)
-                  const zoneStatus = channel?.status ?? zoneStateMap.get(hotspot.zoneId)?.status ?? 'inactive'
-                  const visual = STATUS_VISUALS[zoneStatus]
-                  const selected = hotspot.zoneId === activeZoneId
-                  const hovered = hotspot.zoneId === hoveredZoneId
+            <div className={styles.photoViewport}>
+              <img className={styles.photoImage} src={nodeBackgroundSvg} alt="Расположение узлов QL6C" />
+              <svg
+                className={styles.hotspotLayer}
+                viewBox={`0 0 ${NODE_WINDOW_PHOTO_FRAME.width} ${NODE_WINDOW_PHOTO_FRAME.height}`}
+                aria-label="Интерактивные зоны узла"
+              >
+                <g transform={`translate(-${NODE_WINDOW_PHOTO_FRAME.x} -${NODE_WINDOW_PHOTO_FRAME.y})`}>
+                  {NODE_WINDOW_HOTSPOTS.map((hotspot) => {
+                    const channel = channelByZoneId.get(hotspot.zoneId)
+                    const zoneStatus = channel?.status ?? zoneStateMap.get(hotspot.zoneId)?.status ?? 'inactive'
+                    const visual = STATUS_VISUALS[zoneStatus]
+                    const selected = hotspot.zoneId === activeZoneId
+                    const hovered = hotspot.zoneId === hoveredZoneId
 
-                  return (
-                    <path
-                      key={hotspot.id}
-                      d={hotspot.path}
-                      className={`${styles.zonePath} ${selected ? styles.zoneSelected : ''} ${
-                        hovered ? styles.zoneHovered : ''
-                      }`}
-                      style={{ '--zone-fill': visual.fill, '--zone-stroke': visual.stroke } as CSSProperties}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={hotspot.title}
-                      onClick={() => selectZone(hotspot.zoneId)}
-                      onMouseEnter={() => setHoveredZoneId(hotspot.zoneId)}
-                      onMouseLeave={() => setHoveredZoneId(null)}
-                      onFocus={() => setHoveredZoneId(hotspot.zoneId)}
-                      onBlur={() => setHoveredZoneId(null)}
-                      onKeyDown={(event) => handleZoneKeyDown(event, hotspot.zoneId)}
-                    />
-                  )
-                })}
-              </g>
-            </svg>
+                    return (
+                      <path
+                        key={hotspot.id}
+                        d={hotspot.path}
+                        className={`${styles.zonePath} ${selected ? styles.zoneSelected : ''} ${
+                          hovered ? styles.zoneHovered : ''
+                        }`}
+                        style={{ '--zone-fill': visual.fill, '--zone-stroke': visual.stroke } as CSSProperties}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={hotspot.title}
+                        onClick={() => selectZone(hotspot.zoneId)}
+                        onMouseEnter={() => setHoveredZoneId(hotspot.zoneId)}
+                        onMouseLeave={() => setHoveredZoneId(null)}
+                        onFocus={() => setHoveredZoneId(hotspot.zoneId)}
+                        onBlur={() => setHoveredZoneId(null)}
+                        onKeyDown={(event) => handleZoneKeyDown(event, hotspot.zoneId)}
+                      />
+                    )
+                  })}
+                </g>
+              </svg>
+            </div>
           </section>
         </div>
       </div>

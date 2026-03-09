@@ -21,6 +21,15 @@ body,
   min-height: 100%;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
 body {
   background: #d6d6d6;
   color: #111;

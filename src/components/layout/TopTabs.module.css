@@ -4,12 +4,16 @@
   z-index: 30;
   background: #2a2a2a;
   border-bottom: 1px solid #212121;
-  padding: 0.5rem 1rem 0;
+  padding: clamp(0.35rem, 0.8vw, 0.5rem) 0 0;
 }
 
 .tabs {
+  width: 100%;
+  max-width: min(100%, 96rem);
+  margin-inline: auto;
+  padding-inline: clamp(0.75rem, 2vw, 2rem);
   display: flex;
-  gap: 0.5rem;
+  gap: clamp(0.25rem, 0.7vw, 0.5rem);
   align-items: stretch;
 }
 
@@ -18,13 +22,16 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-start;
+  flex: 1 1 0;
+  min-width: 0;
+  gap: clamp(0.35rem, 0.7vw, 0.5rem);
   border: none;
   border-radius: 0;
   background: transparent;
   color: #d8d8d8;
-  height: 3.75rem;
-  padding: 0 0.75rem;
+  height: clamp(2.85rem, 4.3vw, 3.75rem);
+  padding: 0 clamp(0.45rem, 1.25vw, 0.75rem);
   cursor: pointer;
   transition: color 0.18s ease;
 }
@@ -53,11 +60,12 @@
 }
 
 .iconWrap {
-  width: 1.4rem;
-  height: 1.4rem;
+  width: clamp(1rem, 1.45vw, 1.4rem);
+  height: clamp(1rem, 1.45vw, 1.4rem);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .icon {
@@ -84,10 +92,14 @@
 }
 
 .label {
-  font-size: 2rem;
+  min-width: 0;
+  font-size: clamp(0.9rem, 2vw, 2rem);
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transform: translateY(1px);
 }
 
@@ -95,30 +107,23 @@
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
+  flex-shrink: 0;
   background: var(--tab-accent);
   box-shadow: 0 0 0.35rem var(--tab-accent);
 }
 
 @media (max-width: 900px) {
-  .topBar {
-    padding: 0.5rem 0.5rem 0;
-  }
-
-  .tabs {
-    gap: 0.25rem;
-  }
-
   .tabButton {
-    height: 3.15rem;
-    padding: 0 0.6rem;
+    height: clamp(2.6rem, 10vw, 3.15rem);
+    padding: 0 clamp(0.35rem, 2.1vw, 0.6rem);
   }
 
   .label {
-    font-size: 1rem;
+    font-size: clamp(0.72rem, 3.2vw, 1rem);
   }
 
   .statusDot {
-    width: 0.4rem;
-    height: 0.4rem;
+    width: 0.35rem;
+    height: 0.35rem;
   }
 }

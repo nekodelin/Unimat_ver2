@@ -2,34 +2,52 @@
   position: fixed;
   inset: 0;
   z-index: 2100;
-  display: grid;
-  place-items: center;
-  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.35rem, 1.1vw, 0.9rem);
   background: rgba(8, 10, 12, 0.72);
 }
 
 .dialog {
   position: relative;
-  width: min(98vw, 112rem);
-  max-height: 96dvh;
-  overflow: auto;
-  border-radius: 0.9rem;
+  width: min(96vw, 1600px);
+  height: min(92vh, 980px);
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border-radius: clamp(0.4rem, 0.9vw, 0.9rem);
   border: 1px solid #c9ced6;
   background: #efefef;
   box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.45);
 }
 
+.dialogHeader {
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: clamp(0.35rem, 1vw, 0.8rem) clamp(0.45rem, 1vw, 0.9rem);
+  border-bottom: 1px solid rgba(133, 138, 144, 0.25);
+  background: rgba(242, 242, 242, 0.97);
+}
+
+.dialogSpacer {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .closeButton {
-  position: absolute;
-  top: 0.65rem;
-  right: 0.75rem;
   z-index: 10;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 8.25rem;
-  height: 2.65rem;
-  padding: 0 1.2rem;
+  min-width: clamp(6rem, 9vw, 8.25rem);
+  height: clamp(2rem, 3.2vh, 2.65rem);
+  padding: 0 clamp(0.75rem, 1.2vw, 1.2rem);
   border: 1px solid #8fb700;
   border-radius: 0.7rem;
   background: linear-gradient(180deg, #d7ff1a 0%, #c9f400 100%);
@@ -37,23 +55,47 @@
     0 0.12rem 0 rgba(129, 151, 0, 0.9),
     0 0.55rem 1rem rgba(0, 0, 0, 0.2);
   color: #202020;
+  font-size: clamp(0.92rem, 1vw, 1.05rem);
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .content {
+  min-width: 0;
+  min-height: 0;
   display: grid;
-  grid-template-columns: 10.5rem minmax(18rem, 28rem) minmax(34rem, 1fr);
-  gap: 1rem;
+  grid-template-columns: clamp(110px, 9vw, 170px) clamp(260px, 24vw, 420px) minmax(0, 1fr);
+  grid-template-areas: 'board info photo';
+  gap: clamp(0.5rem, 1vw, 1rem);
   align-items: stretch;
-  padding: 3.75rem 1rem 1rem;
+  padding: clamp(0.45rem, 1vw, 1rem);
+  overflow: auto;
+}
+
+.boardPanelWrap {
+  grid-area: board;
+  height: 100%;
+  max-height: 90vh;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-top: clamp(12px, 2vh, 24px);
+  padding-bottom: clamp(2px, 0.5vh, 8px);
+  overflow: hidden;
 }
 
 .boardPanel {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 52rem;
+  min-width: 0;
+  min-height: 0;
   border-radius: 0.25rem;
   overflow: hidden;
   background: #202a37;
@@ -62,34 +104,40 @@
 
 .boardHeader {
   display: flex;
-  gap: 0.7rem;
-  padding: 0.7rem 1rem 0.45rem;
+  flex-shrink: 0;
+  gap: clamp(4px, 0.6vh, 10px);
+  padding: clamp(4px, 0.7vh, 10px) clamp(6px, 1vh, 12px) clamp(3px, 0.45vh, 6px);
 }
 
 .boardHeadBadge {
-  width: 2.6rem;
-  height: 2.6rem;
-  border: 2px solid rgba(255, 255, 255, 0.75);
+  width: clamp(28px, 3vh, 42px);
+  height: clamp(28px, 3vh, 42px);
+  border: clamp(1.6px, 0.22vh, 2.4px) solid rgba(255, 255, 255, 0.75);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.9rem;
+  font-size: clamp(18px, 2.2vh, 30px);
   line-height: 1;
 }
 
 .channelList {
   list-style: none;
   margin: 0;
-  padding: 0.3rem 0.55rem 0.8rem;
+  padding: clamp(2px, 0.4vh, 6px) clamp(4px, 0.8vh, 10px) clamp(2px, 0.35vh, 6px);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  justify-content: flex-start;
+  gap: clamp(2px, 0.4vh, 6px);
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .channelButton {
   width: 100%;
+  min-height: clamp(32px, 3.8vh, 44px);
+  height: clamp(32px, 3.8vh, 44px);
   border: none;
   border-radius: 0.5rem;
   background: transparent;
@@ -98,8 +146,8 @@
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0.15rem 0.45rem;
+  gap: clamp(6px, 0.8vh, 10px);
+  padding: 0 clamp(4px, 0.75vh, 8px);
   text-align: left;
 }
 
@@ -114,12 +162,12 @@
 .ledGroup {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: clamp(3px, 0.45vh, 7px);
 }
 
 .led {
-  width: 1.18rem;
-  height: 1.18rem;
+  width: clamp(12px, 1.8vh, 18px);
+  height: clamp(12px, 1.8vh, 18px);
   border-radius: 999px;
   display: inline-block;
   border: 2px solid #101821;
@@ -161,34 +209,40 @@
 
 .channelCode {
   justify-self: end;
-  font-size: clamp(1.7rem, 2.2vw, 2.3rem);
+  font-size: clamp(16px, 2vh, 24px);
   line-height: 1;
   letter-spacing: 0.01em;
 }
 
 .boardFooter {
   margin-top: auto;
+  flex-shrink: 0;
   background: #000000;
   color: #ffffff;
   text-align: center;
-  padding: 0.8rem 0.5rem;
-  font-size: 2rem;
+  padding: clamp(4px, 0.8vh, 10px) 0.35rem;
+  font-size: clamp(14px, 1.6vh, 20px);
   letter-spacing: 0.03em;
 }
 
 .infoPanel {
+  grid-area: info;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
 }
 
 .infoCard {
   width: 100%;
-  min-height: 38rem;
+  min-width: 0;
+  min-height: 0;
   border-radius: 0.9rem;
   border: 1px solid rgba(40, 40, 40, 0.14);
   background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 0.55rem 1.35rem rgba(0, 0, 0, 0.12);
-  padding: 0.9rem 1rem;
+  padding: clamp(0.45rem, 1vw, 1rem);
+  overflow: auto;
 }
 
 .infoHead {
@@ -200,7 +254,7 @@
 
 .infoHead h3 {
   margin: 0;
-  font-size: 2rem;
+  font-size: clamp(1.12rem, 1.95vw, 2rem);
   line-height: 1.1;
 }
 
@@ -208,26 +262,28 @@
   --status-color: #b2b2b2;
   border-radius: 999px;
   padding: 0.2rem 0.62rem;
-  font-size: 1rem;
+  font-size: clamp(0.72rem, 0.88vw, 1rem);
   font-weight: 700;
   line-height: 1;
   color: #1f1f1f;
   background: color-mix(in srgb, var(--status-color) 44%, white);
+  white-space: nowrap;
 }
 
 .infoGrid {
-  margin: 0.9rem 0 0;
+  margin: clamp(0.55rem, 0.95vw, 0.9rem) 0 0;
   display: grid;
-  gap: 0.65rem;
+  gap: clamp(0.45rem, 0.8vw, 0.65rem);
 }
 
 .infoGrid div {
   margin: 0;
+  min-width: 0;
 }
 
 .infoGrid dt {
   margin: 0 0 0.14rem;
-  font-size: 1.72rem;
+  font-size: clamp(0.84rem, 1.1vw, 1.72rem);
   font-weight: 700;
   line-height: 1.2;
   color: #272727;
@@ -235,32 +291,45 @@
 
 .infoGrid dd {
   margin: 0;
-  font-size: 2rem;
+  font-size: clamp(0.92rem, 1.35vw, 2rem);
   line-height: 1.25;
   color: #131313;
 }
 
 .hint {
-  margin: 0.85rem 0 0;
-  font-size: 1.3rem;
+  margin: clamp(0.55rem, 0.85vw, 0.85rem) 0 0;
+  font-size: clamp(0.78rem, 1vw, 1.3rem);
   color: #4a4a4a;
   line-height: 1.3;
 }
 
 .photoPanel {
+  grid-area: photo;
   position: relative;
   width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   border-radius: 0.25rem;
   border: 1px solid #d0d4d9;
   overflow: hidden;
   background: #dbdbdb;
-  aspect-ratio: 1063.52 / 830.013;
+}
+
+.photoViewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .photoImage {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   pointer-events: none;
   user-select: none;
 }
@@ -276,7 +345,7 @@
 .zonePath {
   fill: var(--zone-fill);
   stroke: var(--zone-stroke);
-  stroke-width: 4;
+  stroke-width: clamp(2px, 0.2vw, 4px);
   opacity: 0.7;
   cursor: pointer;
   transition:
@@ -299,82 +368,91 @@
   filter: drop-shadow(0 0 0.45rem rgba(208, 255, 0, 0.95));
 }
 
-@media (max-width: 1460px) {
+@media (max-width: 1200px) {
   .content {
-    grid-template-columns: 9.3rem minmax(16rem, 22rem) minmax(28rem, 1fr);
-  }
-
-  .boardPanel {
-    min-height: 46rem;
-  }
-
-  .channelCode {
-    font-size: clamp(1.5rem, 2vw, 2rem);
-  }
-
-  .infoHead h3 {
-    font-size: 1.55rem;
-  }
-
-  .infoGrid dt {
-    font-size: 1.05rem;
-  }
-
-  .infoGrid dd {
-    font-size: 1.35rem;
-  }
-
-  .hint {
-    font-size: 0.9rem;
+    grid-template-columns: clamp(100px, 13vw, 135px) minmax(0, min(46vw, 360px)) minmax(0, 1fr);
+    gap: 0.6rem;
   }
 }
 
 @media (max-width: 1080px) {
   .dialog {
-    max-height: 100dvh;
+    width: min(96vw, 1024px);
+    height: min(94vh, 920px);
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'board info'
+      'photo photo';
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: auto;
+    padding: 0.55rem;
+  }
+
+  .boardPanelWrap,
+  .boardPanel,
+  .infoPanel,
+  .photoPanel {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .backdrop {
+    padding: 0.25rem;
+  }
+
+  .dialog {
+    width: 100%;
+    height: 100%;
+    max-width: min(99vw, 760px);
+    max-height: min(97vh, 900px);
     border-radius: 0.4rem;
   }
 
   .content {
     grid-template-columns: 1fr;
-    padding: 3.55rem 0.7rem 0.7rem;
+    grid-template-areas:
+      'board'
+      'info'
+      'photo';
+    grid-template-rows: auto auto minmax(0, 1fr);
+    padding: 0.45rem;
   }
 
-  .boardPanel {
-    min-height: 0;
-    width: 100%;
+  .boardHeader {
+    justify-content: center;
   }
 
-  .channelList {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.3rem;
+  .photoPanel {
+    min-height: clamp(15rem, 44vh, 24rem);
   }
+}
 
-  .channelButton {
-    grid-template-columns: 1fr;
-    gap: 0.35rem;
-    justify-items: center;
-    padding: 0.45rem 0.25rem;
-  }
-
-  .channelCode {
-    justify-self: center;
-    font-size: 1.2rem;
-  }
-
-  .boardFooter {
-    font-size: 1.4rem;
-  }
-
-  .infoCard {
-    min-height: 0;
+@media (max-width: 560px) {
+  .dialogHeader {
+    padding: 0.3rem 0.38rem;
   }
 
   .closeButton {
-    top: 0.4rem;
-    right: 0.4rem;
-    min-width: 6.75rem;
-    height: 2.25rem;
+    min-width: 5.4rem;
+    height: 1.9rem;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+  }
+
+  .content {
+    padding: 0.35rem;
+    gap: 0.4rem;
+  }
+
+  .infoCard {
+    padding: 0.45rem;
+  }
+
+  .photoPanel {
+    min-height: clamp(13.5rem, 40vh, 21rem);
   }
 }
