@@ -1,0 +1,124 @@
+﻿.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #2a2a2a;
+  border-bottom: 1px solid #212121;
+  padding: 0.5rem 1rem 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.tabButton {
+  --tab-accent: #d0ff00;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #d8d8d8;
+  height: 3.75rem;
+  padding: 0 0.75rem;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.tabButton::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.35rem;
+  background: transparent;
+  transition: background-color 0.18s ease;
+}
+
+.tabButton:hover {
+  color: #f5f5f5;
+}
+
+.active {
+  color: var(--tab-accent);
+}
+
+.active::after {
+  background: var(--tab-accent);
+}
+
+.iconWrap {
+  width: 1.4rem;
+  height: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.techIcon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.85;
+  transition: opacity 0.18s ease;
+}
+
+.tabButton:hover .techIcon {
+  opacity: 1;
+}
+
+.active .techIcon {
+  opacity: 1;
+}
+
+.label {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  transform: translateY(1px);
+}
+
+.statusDot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--tab-accent);
+  box-shadow: 0 0 0.35rem var(--tab-accent);
+}
+
+@media (max-width: 900px) {
+  .topBar {
+    padding: 0.5rem 0.5rem 0;
+  }
+
+  .tabs {
+    gap: 0.25rem;
+  }
+
+  .tabButton {
+    height: 3.15rem;
+    padding: 0 0.6rem;
+  }
+
+  .label {
+    font-size: 1rem;
+  }
+
+  .statusDot {
+    width: 0.4rem;
+    height: 0.4rem;
+  }
+}

@@ -1,0 +1,78 @@
+﻿.canvasWrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.canvas {
+  position: relative;
+  width: min(95vw, 116rem);
+  aspect-ratio: 1824.63 / 501.795;
+}
+
+.trainImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.railLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3.1%;
+  height: 0.2%;
+  background: rgba(77, 77, 77, 0.45);
+}
+
+.zoneButton {
+  position: absolute;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.zoneButton:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.zoneButton::before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+}
+
+.zoneShape {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0.25rem 0.35rem rgba(0, 0, 0, 0.24));
+}
+
+.zoneShape path {
+  fill: var(--zone-fill);
+  stroke: var(--zone-stroke);
+  stroke-width: 4;
+  transition: transform 0.16s ease, fill 0.16s ease, stroke 0.16s ease;
+  transform-origin: center;
+}
+
+.zoneButton:hover .zoneShape path,
+.zoneButton:focus-visible .zoneShape path {
+  transform: scale(1.02);
+}
+
+@media (max-width: 900px) {
+  .canvas {
+    width: 100%;
+  }
+
+  .zoneButton::before {
+    inset: -22%;
+  }
+}

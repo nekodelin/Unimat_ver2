@@ -1,26 +1,34 @@
-*,
-*::before,
-*::after {
+﻿:root {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 400;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
   box-sizing: border-box;
 }
 
 html,
 body,
 #root {
-  height: 100%;
+  margin: 0;
   width: 100%;
+  min-width: 320px;
+  min-height: 100%;
 }
 
 body {
-  margin: 0;
-  background-color: #bfbfbf;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #d6d6d6;
+  color: #111;
 }
 
-@media (max-width: 639px) {
-  html,
-  body,
-  #root {
-    overflow-x: hidden;
-  }
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }

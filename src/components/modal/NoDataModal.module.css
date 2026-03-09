@@ -1,0 +1,39 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  background: rgba(10, 12, 16, 0.62);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.card {
+  width: min(92vw, 24rem);
+  border-radius: 0.75rem;
+  background: #f8f8f8;
+  border: 1px solid #c9c9c9;
+  box-shadow: 0 0.8rem 2rem rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.card p {
+  margin: 0.45rem 0 1rem;
+  color: #424242;
+}
+
+.card button {
+  border: 1px solid #8fb700;
+  border-radius: 0.45rem;
+  background: #d0ff00;
+  color: #1f1f1f;
+  height: 2.1rem;
+  padding: 0 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}

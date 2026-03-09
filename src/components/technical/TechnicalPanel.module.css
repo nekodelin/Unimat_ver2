@@ -1,0 +1,235 @@
+.wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding-left: 6.3rem;
+}
+
+.panel {
+  min-width: 68rem;
+  border: 1px solid #b9bec5;
+  background: #e8eaee;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1.2fr) 8.6rem minmax(17rem, 1fr);
+}
+
+.leftHeader,
+.rightHeader,
+.boardHeader {
+  border-bottom: 1px solid #b9bec5;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.leftHeader,
+.rightHeader {
+  padding: 0 0.6rem;
+}
+
+.boardHeader {
+  justify-content: space-around;
+  background: #1f2736;
+  color: #eff0f2;
+  border-bottom: none;
+}
+
+.leftRow,
+.rightRow,
+.boardRow {
+  min-height: 2.15rem;
+  display: flex;
+  align-items: center;
+}
+
+.leftRow,
+.rightRow {
+  padding: 0 0.5rem;
+  background: #f0f1f3;
+  color: #222;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #bac0c7;
+}
+
+.rightRow {
+  color: #8e1212;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.boardRow {
+  background: #1f2736;
+  justify-content: center;
+  gap: 0.85rem;
+  border-bottom: none;
+}
+
+.channel {
+  width: 1.2rem;
+  text-align: center;
+  color: #eceff4;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.lamp {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+}
+
+.leftLamp {
+  background: #3a3512;
+}
+
+.yellowLampOn {
+  background: #ffda00;
+  border-color: #b89d1a;
+  box-shadow: 0 0 0.38rem rgba(255, 218, 0, 0.65);
+}
+
+.yellowLampOff {
+  background: #7b6f22;
+  border-color: #5f5415;
+  box-shadow: 0 0 0.2rem rgba(255, 218, 0, 0.25);
+}
+
+.rightLamp {
+  background: #2f0d0d;
+}
+
+.redLampOn {
+  background: #ff1e1e;
+  border-color: #9b1212;
+  box-shadow: 0 0 0.5rem rgba(255, 0, 0, 0.9);
+}
+
+.redLampOff {
+  background: #4e1616;
+  border-color: #6f2222;
+  box-shadow: 0 0 0.2rem rgba(255, 30, 30, 0.24);
+}
+
+.faultRow {
+  background: #ff8f8f;
+  color: #471212;
+  border-bottom-color: #d86f6f;
+}
+
+.faultRow .channel {
+  color: #4f0f0f;
+}
+
+.mutedRow {
+  color: #5a5a5a;
+  background: #e7e7e7;
+}
+
+.footer {
+  min-height: 3.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.65rem;
+  background: #f0f1f3;
+  border-top: 1px solid #bdc3ca;
+}
+
+.footer strong {
+  font-size: 2.15rem;
+}
+
+.footerLamp {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.34);
+}
+
+.indicatorOff {
+  background: #2a3041;
+  box-shadow: inset 0 0 0.25rem rgba(0, 0, 0, 0.5);
+}
+
+.indicatorSolid {
+  background: #2f58ff;
+  box-shadow: 0 0 0.45rem rgba(47, 88, 255, 0.8);
+}
+
+.indicatorBlinking {
+  background: #2f58ff;
+  box-shadow: 0 0 0.45rem rgba(47, 88, 255, 0.8);
+  animation: alarmBlink 1s linear infinite;
+}
+
+@keyframes alarmBlink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  55%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.soundButton {
+  border-radius: 0.5rem;
+  border: 1px solid #909090;
+  min-width: 6.6rem;
+  height: 2.35rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.soundOn {
+  background: #202020;
+  color: #d3ff00;
+  border-color: #d3ff00;
+}
+
+.soundOff {
+  background: #c0c0c0;
+  color: #666;
+}
+
+.soundButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .wrap {
+    padding-left: 4.4rem;
+  }
+
+  .panel {
+    min-width: 58rem;
+  }
+
+  .leftHeader,
+  .rightHeader,
+  .boardHeader {
+    font-size: 1rem;
+  }
+
+  .footer strong {
+    font-size: 1.3rem;
+  }
+
+  .soundButton {
+    font-size: 1rem;
+    min-width: 4.4rem;
+    height: 2rem;
+  }
+}
+
+

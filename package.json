@@ -1,5 +1,5 @@
 {
-  "name": "unimat-ver2",
+  "name": "unimat-ver3",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

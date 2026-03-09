@@ -1,0 +1,380 @@
+﻿.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  padding: 0.75rem;
+  background: rgba(8, 10, 12, 0.72);
+}
+
+.dialog {
+  position: relative;
+  width: min(98vw, 112rem);
+  max-height: 96dvh;
+  overflow: auto;
+  border-radius: 0.9rem;
+  border: 1px solid #c9ced6;
+  background: #efefef;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.45);
+}
+
+.closeButton {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 8.25rem;
+  height: 2.65rem;
+  padding: 0 1.2rem;
+  border: 1px solid #8fb700;
+  border-radius: 0.7rem;
+  background: linear-gradient(180deg, #d7ff1a 0%, #c9f400 100%);
+  box-shadow:
+    0 0.12rem 0 rgba(129, 151, 0, 0.9),
+    0 0.55rem 1rem rgba(0, 0, 0, 0.2);
+  color: #202020;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 10.5rem minmax(18rem, 28rem) minmax(34rem, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+  padding: 3.75rem 1rem 1rem;
+}
+
+.boardPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 52rem;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  background: #202a37;
+  color: #ffffff;
+}
+
+.boardHeader {
+  display: flex;
+  gap: 0.7rem;
+  padding: 0.7rem 1rem 0.45rem;
+}
+
+.boardHeadBadge {
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.channelList {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem 0.55rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.channelButton {
+  width: 100%;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.15rem 0.45rem;
+  text-align: left;
+}
+
+.channelButtonHovered {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.channelButtonSelected {
+  background: rgba(208, 255, 0, 0.19);
+}
+
+.ledGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.led {
+  width: 1.18rem;
+  height: 1.18rem;
+  border-radius: 999px;
+  display: inline-block;
+  border: 2px solid #101821;
+  box-shadow: inset 0 0 0.2rem rgba(0, 0, 0, 0.35);
+}
+
+.ledYellowOff {
+  background: #5f5628;
+  border-color: #3f3716;
+}
+
+.ledYellowOn {
+  background: #ffd400;
+  border-color: #b08706;
+  box-shadow:
+    inset 0 0 0.2rem rgba(0, 0, 0, 0.3),
+    0 0 0.45rem rgba(255, 212, 0, 0.8);
+}
+
+.ledRedOff {
+  background: #3b1313;
+  border-color: #5b2323;
+}
+
+.ledRedOn {
+  background: #ff2f2f;
+  border-color: #8f1515;
+  box-shadow:
+    inset 0 0 0.2rem rgba(0, 0, 0, 0.3),
+    0 0 0.42rem rgba(255, 0, 0, 0.78);
+}
+
+.ledSelected {
+  box-shadow:
+    inset 0 0 0.22rem rgba(0, 0, 0, 0.45),
+    0 0 0 3px rgba(208, 255, 0, 0.35),
+    0 0 0.6rem rgba(208, 255, 0, 0.42);
+}
+
+.channelCode {
+  justify-self: end;
+  font-size: clamp(1.7rem, 2.2vw, 2.3rem);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.boardFooter {
+  margin-top: auto;
+  background: #000000;
+  color: #ffffff;
+  text-align: center;
+  padding: 0.8rem 0.5rem;
+  font-size: 2rem;
+  letter-spacing: 0.03em;
+}
+
+.infoPanel {
+  display: flex;
+  align-items: flex-start;
+}
+
+.infoCard {
+  width: 100%;
+  min-height: 38rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(40, 40, 40, 0.14);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 0.55rem 1.35rem rgba(0, 0, 0, 0.12);
+  padding: 0.9rem 1rem;
+}
+
+.infoHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.infoHead h3 {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.statusTag {
+  --status-color: #b2b2b2;
+  border-radius: 999px;
+  padding: 0.2rem 0.62rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #1f1f1f;
+  background: color-mix(in srgb, var(--status-color) 44%, white);
+}
+
+.infoGrid {
+  margin: 0.9rem 0 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.infoGrid div {
+  margin: 0;
+}
+
+.infoGrid dt {
+  margin: 0 0 0.14rem;
+  font-size: 1.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #272727;
+}
+
+.infoGrid dd {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.25;
+  color: #131313;
+}
+
+.hint {
+  margin: 0.85rem 0 0;
+  font-size: 1.3rem;
+  color: #4a4a4a;
+  line-height: 1.3;
+}
+
+.photoPanel {
+  position: relative;
+  width: 100%;
+  border-radius: 0.25rem;
+  border: 1px solid #d0d4d9;
+  overflow: hidden;
+  background: #dbdbdb;
+  aspect-ratio: 1063.52 / 830.013;
+}
+
+.photoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hotspotLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.zonePath {
+  fill: var(--zone-fill);
+  stroke: var(--zone-stroke);
+  stroke-width: 4;
+  opacity: 0.7;
+  cursor: pointer;
+  transition:
+    opacity 0.14s ease,
+    filter 0.14s ease;
+}
+
+.zoneHovered {
+  opacity: 0.88;
+}
+
+.zoneSelected {
+  opacity: 0.95;
+  filter: drop-shadow(0 0 0.4rem rgba(255, 255, 255, 0.85));
+}
+
+.zonePath:focus-visible {
+  outline: none;
+  opacity: 1;
+  filter: drop-shadow(0 0 0.45rem rgba(208, 255, 0, 0.95));
+}
+
+@media (max-width: 1460px) {
+  .content {
+    grid-template-columns: 9.3rem minmax(16rem, 22rem) minmax(28rem, 1fr);
+  }
+
+  .boardPanel {
+    min-height: 46rem;
+  }
+
+  .channelCode {
+    font-size: clamp(1.5rem, 2vw, 2rem);
+  }
+
+  .infoHead h3 {
+    font-size: 1.55rem;
+  }
+
+  .infoGrid dt {
+    font-size: 1.05rem;
+  }
+
+  .infoGrid dd {
+    font-size: 1.35rem;
+  }
+
+  .hint {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 1080px) {
+  .dialog {
+    max-height: 100dvh;
+    border-radius: 0.4rem;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    padding: 3.55rem 0.7rem 0.7rem;
+  }
+
+  .boardPanel {
+    min-height: 0;
+    width: 100%;
+  }
+
+  .channelList {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.3rem;
+  }
+
+  .channelButton {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    justify-items: center;
+    padding: 0.45rem 0.25rem;
+  }
+
+  .channelCode {
+    justify-self: center;
+    font-size: 1.2rem;
+  }
+
+  .boardFooter {
+    font-size: 1.4rem;
+  }
+
+  .infoCard {
+    min-height: 0;
+  }
+
+  .closeButton {
+    top: 0.4rem;
+    right: 0.4rem;
+    min-width: 6.75rem;
+    height: 2.25rem;
+  }
+}
