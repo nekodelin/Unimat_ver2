@@ -1,7 +1,9 @@
-import { useState, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import ModuleModal from '@/components/ModuleModal/ModuleModal'
-import { trainZones, type TrainZone } from '@/config/trainZonesConfig'
+import { statusToTone } from '@/config/statusVisual'
+import { trainZones, type TrainZone, type TrainZoneVisualState } from '@/config/trainZonesConfig'
 import { useRealtimeStore } from '@/store/useRealtimeStore'
+import type { ChannelStatus } from '@/types/realtime'
 import styles from './TrainPage.module.css'
 
 const trainImageMap = import.meta.glob('@/assets/images/train/train.jpg', {
@@ -26,10 +28,28 @@ function createTrainZoneStyle(zone: TrainZone): CSSProperties {
   }
 }
 
+function zoneStatusToVisual(status: ChannelStatus | undefined): TrainZoneVisualState {
+  const tone = status ? statusToTone(status) : 'inactive'
+
+  if (tone === 'red') {
+    return 'fault'
+  }
+
+  if (tone === 'green') {
+    return 'normal'
+  }
+
+  return 'inactive'
+}
+
 function TrainPage() {
   const { zones, loading } = useRealtimeStore()
   const [modalState, setModalState] = useState<ModalState | null>(null)
   const [isNoDataOpen, setNoDataOpen] = useState(false)
+
+  const zoneStatusLookup = useMemo(() => {
+    return new Map(zones.map((zone) => [zone.id, zoneStatusToVisual(zone.status)]))
+  }, [zones])
 
   const openModuleModal = ({ moduleId, hotspotId, relatedChannelIds }: ModalState) => {
     setModalState({ moduleId, hotspotId, relatedChannelIds })
@@ -63,6 +83,20 @@ function TrainPage() {
     openExistingModuleModal(zone.sourceZoneId)
   }
 
+  const resolveZoneVisualState = (zone: TrainZone): TrainZoneVisualState => {
+    const sourceId = zone.statusSourceZoneId ?? zone.sourceZoneId
+
+    if (sourceId) {
+      return zoneStatusLookup.get(sourceId) ?? zone.defaultStatus ?? 'inactive'
+    }
+
+    if (zone.action === 'show-no-data') {
+      return zone.defaultStatus ?? 'inactive'
+    }
+
+    return zone.defaultStatus ?? 'normal'
+  }
+
   return (
     <>
       <section className={styles.page}>
@@ -76,8 +110,17 @@ function TrainPage() {
 
             <div className={styles.zonesLayer}>
               {trainZones.map((zone) => {
+                const visualState = resolveZoneVisualState(zone)
+                const statusClass =
+                  visualState === 'fault'
+                    ? styles.trainZoneFault
+                    : visualState === 'inactive'
+                      ? styles.trainZoneInactive
+                      : styles.trainZoneNormal
+                const isSelectedZone =
+                  modalState && zone.action === 'open-existing-modal' && modalState.hotspotId === zone.sourceZoneId
                 const title =
-                  zone.action === 'show-no-data' ? zone.label || 'Данных нет' : 'Открыть окно узла'
+                  zone.action === 'show-no-data' ? zone.label || 'Данных нет' : 'Открыть окно модуля'
 
                 return (
                   <button
@@ -85,9 +128,7 @@ function TrainPage() {
                     type="button"
                     title={title}
                     aria-label={title}
-                    className={`${styles.trainZone} ${
-                      modalState && zone.action === 'open-existing-modal' ? styles.trainZoneActive : ''
-                    }`}
+                    className={`${styles.trainZone} ${statusClass} ${isSelectedZone ? styles.trainZoneActive : ''}`}
                     style={createTrainZoneStyle(zone)}
                     onClick={() => onZoneClick(zone)}
                   />

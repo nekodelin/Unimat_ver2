@@ -1,23 +1,25 @@
 .panel {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
+  min-height: 0;
 }
 
 .moduleTabs {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px;
+  gap: 4px;
+  padding: 3px;
   border: 1px solid #bcbcbc;
   background-color: #d0d0d0;
+  overflow-x: auto;
 }
 
 .moduleTab {
   border: 1px solid transparent;
-  height: 30px;
-  padding: 0 10px;
-  font-size: 17px;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;
@@ -53,9 +55,10 @@
 
 .matrixWrap {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr);
   gap: 0;
   min-width: 0;
+  min-height: 0;
 }
 
 .journalButton {
@@ -71,7 +74,8 @@
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  padding: 4px;
+  padding: 8px 5px;
+  min-height: 44px;
 }
 
 .journalTop,
@@ -79,15 +83,20 @@
   text-align: center;
 }
 
+.tableScroll {
+  min-width: 0;
+  overflow: auto;
+}
+
 .table {
-  --header-height: 36px;
-  --row-height: 30px;
-  --footer-height: 46px;
+  --header-height: 40px;
+  --row-height: 34px;
+  --footer-height: 52px;
   display: grid;
-  grid-template-columns: minmax(340px, 1fr) 102px minmax(340px, 1fr);
+  grid-template-columns: minmax(300px, 1fr) 112px minmax(300px, 1fr);
   border: 1px solid #b8b8b8;
   background-color: #e1e1e1;
-  min-width: 0;
+  min-width: 860px;
 }
 
 .cell {
@@ -106,7 +115,7 @@
   display: flex;
   align-items: center;
   padding: 0 8px;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 600;
   background-color: #ebebeb;
 }
@@ -183,7 +192,7 @@
 
 .bit {
   justify-self: end;
-  font-size: 31px;
+  font-size: 28px;
   font-weight: 700;
   line-height: 1;
 }
@@ -230,7 +239,7 @@
   height: var(--footer-height);
   border-bottom: 0;
   border-right: 1px solid #bcbcbc;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: 1px;
   justify-content: center;
@@ -242,11 +251,13 @@
   align-items: center;
   gap: 10px;
   font-size: 15px;
+  flex-wrap: wrap;
 }
 
 .alarmLabel {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
+  line-height: 1;
 }
 
 .alarmLed {
@@ -268,7 +279,7 @@
   border: 1px solid #9f9f9f;
   background-color: #bdbdbd;
   color: #4f4f4f;
-  height: 28px;
+  min-height: 38px;
   padding: 0 12px;
   font-size: 13px;
   font-weight: 700;
@@ -280,13 +291,175 @@
   color: #2b2b2b;
 }
 
-@media (max-width: 1400px) {
+.mobileStack {
+  display: none;
+  min-width: 0;
+}
+
+.mobileJournalButton {
+  border: 1px solid #8e8e8e;
+  background-color: #efefef;
+  color: #1f1f1f;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mobileBoard,
+.mobileSignals,
+.mobileFooter {
+  border: 1px solid #b9b9b9;
+  background-color: #efefef;
+}
+
+.mobileBoard {
+  padding: 8px;
+}
+
+.mobileBoardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.mobileBoardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.mobileBadges {
+  display: flex;
+  gap: 8px;
+}
+
+.mobileBadge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #dbdbdb;
+  color: #fff;
+  background-color: #1f2a3a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mobileBoardRows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mobileBoardRow {
+  display: grid;
+  grid-template-columns: 16px 16px 1fr;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #c9c9c9;
+  background-color: #f8f8f8;
+  min-height: 42px;
+  padding: 0 10px;
+}
+
+.mobileBit {
+  justify-self: end;
+  color: #1f1f1f;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mobileSignals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+
+.mobileSignalCard {
+  border: 1px solid #cdcdcd;
+  background-color: #fafafa;
+  padding: 8px;
+}
+
+.mobileSignalFault {
+  border-color: #c43b31;
+  background-color: #f8dbd9;
+}
+
+.mobileSignalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mobileSignalCode {
+  color: #1f1f1f;
+  font-size: 13px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.mobileSignalBit {
+  color: #3a3a3a;
+  font-size: 12px;
+}
+
+.mobileSignalTitle {
+  margin: 6px 0 0;
+  color: #2b2b2b;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.mobileSignalFaultText {
+  margin: 6px 0 0;
+  color: #303030;
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.mobileFooter {
+  padding: 8px;
+}
+
+.mobileMeta {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+  color: #2b2b2b;
+  font-size: 13px;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
   .moduleTab {
-    font-size: 15px;
+    font-size: 16px;
+    padding: 0 10px;
+  }
+
+  .matrixWrap {
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+
+  .journalButton {
+    font-size: 10px;
+    padding: 6px 4px;
+  }
+
+  .table {
+    min-width: 760px;
+    grid-template-columns: minmax(240px, 1fr) 102px minmax(240px, 1fr);
   }
 
   .headerCell {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .rowCell,
@@ -295,24 +468,61 @@
   }
 
   .bit {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .alarmLabel {
-    font-size: 24px;
+    font-size: 22px;
   }
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 639px) {
+  .moduleTabs {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .moduleTab {
+    font-size: 14px;
+    min-height: 44px;
+    padding: 0 10px;
+  }
+
   .matrixWrap {
-    grid-template-columns: 44px minmax(0, 1fr);
+    display: none;
   }
 
-  .journalButton {
-    font-size: 9px;
+  .mobileStack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-x: hidden;
   }
 
-  .table {
-    min-width: 780px;
+  .alarmPanel {
+    gap: 8px;
+  }
+
+  .alarmLabel {
+    font-size: 18px;
+  }
+
+  .soundButton {
+    min-height: 44px;
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobileBoardRows {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileBoardRow {
+    min-height: 44px;
+  }
+
+  .mobileSignalCard {
+    padding: 7px;
   }
 }

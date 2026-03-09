@@ -1,16 +1,16 @@
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
   min-height: 0;
-  padding: 6px;
+  padding: 8px;
   background-color: #cdcdcd;
 }
 
 .loading {
-  height: 28px;
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
   padding: 0 10px;
@@ -22,7 +22,7 @@
 
 .demoBadge {
   width: fit-content;
-  height: 22px;
+  min-height: 24px;
   display: inline-flex;
   align-items: center;
   padding: 0 8px;
@@ -60,9 +60,40 @@
   font-size: 11px;
 }
 
-@media (max-width: 1120px) {
+@media (min-width: 640px) and (max-width: 1023px) {
+  .page {
+    padding: 6px;
+    gap: 6px;
+  }
+
   .debugList {
     grid-template-columns: 1fr;
   }
 }
 
+@media (max-width: 639px) {
+  .page {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .loading,
+  .demoBadge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .debugPanel {
+    padding: 8px;
+  }
+
+  .debugList {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .page {
+    padding: 10px;
+  }
+}

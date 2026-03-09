@@ -5,13 +5,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 12px;
   background-color: rgba(0, 0, 0, 0.42);
 }
 
 .modalWindow {
-  width: min(1700px, 99vw);
-  height: min(900px, 95vh);
+  width: min(1700px, 98vw);
+  height: min(900px, 96vh);
   display: flex;
   flex-direction: column;
   border: 2px solid #1ba3ff;
@@ -33,10 +33,11 @@
   flex: 0 0 auto;
   border: none;
   border-left: 1px solid #9eb800;
+  min-height: 44px;
   padding: 0 16px;
   background-color: #d7ff00;
   color: #0f0f0f;
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
   font-weight: 500;
   cursor: pointer;
@@ -57,6 +58,7 @@
   flex: 0 0 auto;
   border: none;
   border-right: 1px solid #b8b8b8;
+  min-height: 44px;
   padding: 4px 12px 2px;
   font-size: 30px;
   line-height: 1;
@@ -120,6 +122,7 @@
   color: #2f2f2f;
   font-size: 14px;
   font-weight: 600;
+  word-break: break-word;
 }
 
 .infoCard {
@@ -139,6 +142,7 @@
   color: #242424;
   font-size: 25px;
   line-height: 1.2;
+  word-break: break-word;
 }
 
 .photoPane {
@@ -245,9 +249,14 @@
   color: #2e2e2e;
 }
 
-@media (max-width: 1300px) {
+@media (min-width: 640px) and (max-width: 1023px) {
+  .modalWindow {
+    width: 96vw;
+    height: 94vh;
+  }
+
   .moduleTab {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .closeButton {
@@ -261,16 +270,10 @@
   .infoValue {
     font-size: 17px;
   }
-}
-
-@media (max-width: 1100px) {
-  .modalWindow {
-    height: min(920px, 96vh);
-  }
 
   .modalContent {
     grid-template-columns: auto minmax(240px, 320px);
-    grid-template-rows: minmax(260px, 1fr) minmax(260px, 1fr);
+    grid-template-rows: minmax(220px, 1fr) minmax(240px, 1fr);
   }
 
   .boardPane {
@@ -289,9 +292,15 @@
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 639px) {
   .modalOverlay {
-    padding: 4px;
+    padding: 8px;
+  }
+
+  .modalWindow {
+    width: 92vw;
+    height: 85vh;
+    max-height: 85vh;
   }
 
   .modalHeader {
@@ -303,24 +312,28 @@
   }
 
   .moduleTab {
-    font-size: 16px;
+    font-size: 14px;
+    min-height: 44px;
     padding: 6px 10px;
   }
 
   .closeButton {
     width: 100%;
+    min-height: 44px;
     font-size: 16px;
-    height: 34px;
+    border-left: none;
+    border-top: 1px solid #9eb800;
   }
 
   .modalContent {
     display: flex;
     flex-direction: column;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .boardPane {
-    min-height: 260px;
+    min-height: 230px;
     justify-content: center;
   }
 
@@ -328,9 +341,64 @@
     border-right: none;
     border-top: 1px solid #c9c9c9;
     border-bottom: 1px solid #c9c9c9;
+    padding: 10px;
+  }
+
+  .infoTitle {
+    font-size: 19px;
+  }
+
+  .infoValue {
+    font-size: 15px;
   }
 
   .photoPane {
-    min-height: 320px;
+    min-height: 250px;
+    padding: 6px;
+  }
+
+  .moduleImageWrap {
+    min-height: 230px;
+  }
+
+  .emptyTabCard {
+    width: min(430px, 92%);
+    padding: 16px;
+  }
+
+  .emptyTabTitle {
+    font-size: 20px;
+  }
+
+  .emptyTabText {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 390px) {
+  .modalOverlay {
+    padding: 6px;
+  }
+
+  .modalWindow {
+    width: 94vw;
+  }
+
+  .moduleTab {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .infoPane {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .infoTitle {
+    font-size: 17px;
+  }
+
+  .infoValue {
+    font-size: 14px;
   }
 }

@@ -3,7 +3,7 @@
   flex: 1;
   min-width: 0;
   min-height: 0;
-  padding: 12px;
+  padding: 12px 14px 10px;
 }
 
 .imageStage {
@@ -18,13 +18,15 @@
   overflow: hidden;
   border: 1px solid #c8c8c8;
   background-color: #e8e8e8;
+  padding: 10px;
 }
 
 .trainCanvas {
   position: relative;
-  width: min(96%, 1700px);
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
   aspect-ratio: 3650 / 1004;
-  max-width: 100%;
 }
 
 .trainImage {
@@ -57,19 +59,49 @@
 
 .trainZone {
   position: absolute;
-  border-radius: 4px;
-  border: 2px solid rgba(67, 203, 54, 0.9);
-  background: rgba(67, 203, 54, 0.35);
-  box-shadow: 0 0 0 1px rgba(36, 121, 31, 0.35), inset 0 0 10px rgba(67, 203, 54, 0.25);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   pointer-events: auto;
+  touch-action: manipulation;
   transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.trainZone:hover {
-  background: rgba(67, 203, 54, 0.46);
-  border-color: rgba(67, 203, 54, 1);
-  box-shadow: 0 0 0 1px rgba(30, 100, 26, 0.45), inset 0 0 12px rgba(67, 203, 54, 0.38);
+.trainZone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.trainZoneNormal {
+  border-color: rgba(67, 203, 54, 0.94);
+  background: rgba(67, 203, 54, 0.32);
+  box-shadow: 0 0 0 1px rgba(36, 121, 31, 0.35), inset 0 0 12px rgba(67, 203, 54, 0.24);
+}
+
+.trainZoneNormal:hover {
+  background: rgba(67, 203, 54, 0.44);
+}
+
+.trainZoneFault {
+  border-color: rgba(229, 58, 52, 0.95);
+  background: rgba(229, 58, 52, 0.34);
+  box-shadow: 0 0 0 1px rgba(144, 18, 14, 0.35), inset 0 0 12px rgba(229, 58, 52, 0.28);
+}
+
+.trainZoneFault:hover {
+  background: rgba(229, 58, 52, 0.46);
+}
+
+.trainZoneInactive {
+  border-color: rgba(119, 124, 130, 0.9);
+  background: rgba(123, 128, 134, 0.3);
+  box-shadow: 0 0 0 1px rgba(95, 101, 109, 0.35), inset 0 0 10px rgba(96, 101, 108, 0.26);
+}
+
+.trainZoneInactive:hover {
+  background: rgba(126, 132, 138, 0.4);
 }
 
 .trainZone:focus-visible {
@@ -78,8 +110,7 @@
 }
 
 .trainZoneActive {
-  background: rgba(67, 203, 54, 0.5);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45), 0 0 16px rgba(43, 142, 35, 0.45);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5), 0 0 16px rgba(35, 35, 35, 0.3);
 }
 
 .loading {
@@ -104,7 +135,7 @@
 }
 
 .noDataDialog {
-  width: min(360px, 100%);
+  width: min(360px, calc(100vw - 32px));
   border-radius: 12px;
   border: 1px solid #c8c8c8;
   background-color: #f2f2f2;
@@ -123,6 +154,7 @@
 .noDataClose {
   margin-top: 16px;
   width: 100%;
+  min-height: 44px;
   border: none;
   border-radius: 8px;
   padding: 10px 14px;
@@ -137,12 +169,61 @@
   filter: brightness(0.95);
 }
 
-@media (max-width: 700px) {
+@media (min-width: 640px) and (max-width: 1023px) {
   .page {
-    padding: 8px;
+    padding: 10px;
   }
 
-  .trainCanvas {
-    width: 98%;
+  .imageStage {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 639px) {
+  .page {
+    padding: 12px;
+  }
+
+  .imageStage {
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .trainZone::before {
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
+  .loading {
+    margin-top: 6px;
+    font-size: 11px;
+  }
+
+  .noDataOverlay {
+    padding: 10px;
+  }
+
+  .noDataDialog {
+    width: min(360px, 92vw);
+    padding: 16px 14px 14px;
+  }
+
+  .noDataText {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 390px) {
+  .page {
+    padding: 10px;
+  }
+
+  .trainZone::before {
+    width: max(100%, 46px);
+    height: max(100%, 46px);
   }
 }

@@ -42,7 +42,7 @@
 }
 
 .row {
-  min-height: 13px;
+  min-height: 18px;
   display: grid;
   grid-template-columns: 12px 12px 1fr;
   gap: 12px;
@@ -141,5 +141,26 @@
 @media (max-width: 1120px) {
   .board {
     height: auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .board {
+    width: 170px;
+    min-width: 170px;
+  }
+
+  .rows {
+    gap: 4px;
+    padding: 2px 12px 10px;
+  }
+
+  .row {
+    min-height: 22px;
+  }
+
+  .rowButton {
+    min-height: 44px;
+    padding: 0 6px;
   }
 }

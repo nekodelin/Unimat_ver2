@@ -1,4 +1,5 @@
 export type TrainZoneAction = 'open-existing-modal' | 'show-no-data'
+export type TrainZoneVisualState = 'normal' | 'fault' | 'inactive'
 
 export type TrainZone = {
   id: string
@@ -8,6 +9,8 @@ export type TrainZone = {
   height: string
   action: TrainZoneAction
   sourceZoneId?: string
+  statusSourceZoneId?: string
+  defaultStatus?: TrainZoneVisualState
   label?: string
 }
 
@@ -20,6 +23,8 @@ export const trainZones: TrainZone[] = [
     height: '8%',
     action: 'open-existing-modal',
     sourceZoneId: 'train-ql6c-left-hook',
+    statusSourceZoneId: 'train-ql6c-left-hook',
+    defaultStatus: 'inactive',
   },
   {
     id: 'secondary-node',
@@ -28,6 +33,8 @@ export const trainZones: TrainZone[] = [
     width: '2.8%',
     height: '6.5%',
     action: 'show-no-data',
+    statusSourceZoneId: 'train-ql1c-center',
+    defaultStatus: 'inactive',
     label: 'Данных нет',
   },
 ]

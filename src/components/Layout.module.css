@@ -1,7 +1,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   width: 100%;
   margin: 0;
   padding: 4px;
@@ -20,3 +20,18 @@
   overflow: hidden;
 }
 
+@media (min-width: 640px) and (max-width: 1023px) {
+  .container {
+    padding: 3px;
+  }
+}
+
+@media (max-width: 639px) {
+  .container {
+    padding: 2px;
+  }
+
+  .workspace {
+    margin-top: 1px;
+  }
+}

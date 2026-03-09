@@ -60,8 +60,8 @@
   margin-left: auto;
   border: 0;
   border-radius: 6px;
-  height: 26px;
-  padding: 0 10px;
+  min-height: 32px;
+  padding: 0 12px;
   background-color: #d3d3d3;
   color: #1b1b1b;
   font-size: 12px;
@@ -73,12 +73,35 @@
   background-color: #c2c2c2;
 }
 
-@media (max-width: 900px) {
+@media (min-width: 640px) and (max-width: 1023px) {
   .banner {
     flex-wrap: wrap;
   }
 
   .retryButton {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 639px) {
+  .banner {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .badge {
+    min-width: 100px;
+  }
+
+  .time,
+  .errorText {
+    width: 100%;
+  }
+
+  .retryButton {
+    width: 100%;
+    min-height: 44px;
     margin-left: 0;
   }
 }

@@ -40,7 +40,7 @@
 
 .filterSelect {
   min-width: 130px;
-  height: 30px;
+  min-height: 36px;
   border-radius: 6px;
   border: 1px solid #c8c8c8;
   background-color: #fff;
@@ -56,8 +56,8 @@
 }
 
 .closeButton {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: 8px;
   background-color: #d2d2d2;
@@ -101,6 +101,7 @@
 .message {
   color: #1f1f1f;
   font-size: 14px;
+  word-break: break-word;
 }
 
 .status {
@@ -113,6 +114,7 @@
   color: #2f2f2f;
   font-size: 13px;
   width: 100%;
+  word-break: break-word;
 }
 
 .info {
@@ -130,13 +132,24 @@
   border-color: #ff3b30;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .overlay {
-    padding: 12px;
+    padding: 8px;
+  }
+
+  .modal {
+    width: 92vw;
+    max-height: 85vh;
   }
 
   .filters {
     flex-direction: column;
+    padding: 8px 12px;
+  }
+
+  .filterSelect {
+    min-height: 44px;
+    width: 100%;
   }
 
   .header {
@@ -145,5 +158,24 @@
 
   .title {
     font-size: 16px;
+  }
+
+  .closeButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  .logList {
+    padding: 8px 12px 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .overlay {
+    padding: 6px;
+  }
+
+  .modal {
+    width: 94vw;
   }
 }

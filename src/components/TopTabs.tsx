@@ -9,7 +9,7 @@ interface TopTabsProps {
 
 const tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'train', label: 'Поезд' },
-  { key: 'technical', label: 'Техническая вкладка' },
+  { key: 'technical', label: 'Техническая' },
 ]
 
 function TopTabs({ activeTab, onTabChange }: TopTabsProps) {
@@ -36,4 +36,3 @@ function TopTabs({ activeTab, onTabChange }: TopTabsProps) {
 }
 
 export default TopTabs
-
