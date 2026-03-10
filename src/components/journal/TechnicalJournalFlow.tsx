@@ -607,11 +607,8 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
 
                 <div className={styles.tableHead}>
                   <span>Дата и время</span>
-                  <span>Тип</span>
-                  <span>Источник</span>
                   <span>Элемент</span>
-                  <span>Старое</span>
-                  <span>Новое</span>
+                  <span>Новое состояние</span>
                   <span>Описание</span>
                 </div>
 
@@ -635,12 +632,11 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
                           }`}
                         >
                           <span className={styles.eventCell}>{formatDateTime(entry.timestamp)}</span>
-                          <span className={styles.eventCell}>{entry.type || entry.title || '-'}</span>
-                          <span className={styles.eventCell}>{entry.source || '-'}</span>
-                          <span className={styles.eventCell}>{entry.element || entry.channel || '-'}</span>
-                          <span className={styles.eventCell}>{entry.oldState || '-'}</span>
+                          <span className={`${styles.eventCell} ${styles.eventCellElement}`}>
+                            {entry.element || entry.channel || '-'}
+                          </span>
                           <span className={styles.eventCell}>{entry.newState || '-'}</span>
-                          <span className={styles.eventCell}>
+                          <span className={`${styles.eventCell} ${styles.eventCellDescription}`}>
                             {entry.description || entry.message || entry.reason || '-'}
                           </span>
                         </article>

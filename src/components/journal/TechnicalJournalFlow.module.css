@@ -330,7 +330,7 @@
 .tableHead {
   min-width: 0;
   display: grid;
-  grid-template-columns: 7.6rem 4.8rem 4.8rem 5.2rem 4.2rem 4.2rem minmax(0, 1fr);
+  grid-template-columns: 8rem minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 2fr);
   gap: clamp(0.2rem, 0.55vw, 0.4rem);
   align-items: center;
   padding: clamp(0.3rem, 0.65vw, 0.4rem) clamp(0.35rem, 0.9vw, 0.6rem);
@@ -362,7 +362,7 @@
 .eventRow {
   min-width: 0;
   display: grid;
-  grid-template-columns: 7.6rem 4.8rem 4.8rem 5.2rem 4.2rem 4.2rem minmax(0, 1fr);
+  grid-template-columns: 8rem minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 2fr);
   gap: clamp(0.2rem, 0.55vw, 0.4rem);
   align-items: start;
   padding: clamp(0.3rem, 0.55vw, 0.45rem);
@@ -375,6 +375,15 @@
   min-width: 0;
   color: #d4d6da;
   overflow-wrap: anywhere;
+}
+
+.eventCellElement {
+  min-width: 0;
+}
+
+.eventCellDescription {
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .stateMessage {
@@ -472,7 +481,7 @@
 
   .tableHead,
   .eventRow {
-    grid-template-columns: 6.8rem 4.2rem 4.2rem 4.6rem 3.8rem 3.8rem minmax(0, 1fr);
+    grid-template-columns: 6.8rem minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.7fr);
     font-size: clamp(0.6rem, 1.85vw, 0.72rem);
   }
 }
@@ -497,7 +506,7 @@
 
   .tableHead,
   .eventRow {
-    grid-template-columns: 6.2rem 3.8rem 3.8rem 4.2rem 3.2rem 3.2rem minmax(0, 1fr);
+    grid-template-columns: 6.2rem minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.45fr);
     gap: 0.2rem;
   }
 }
