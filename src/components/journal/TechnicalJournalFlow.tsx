@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useReducer, useRef, useState } from 'react'
-import journalDockUrl from '../../assets/raw/Техническая вкладка/1 сост.svg'
+import journalBrandUrl from '../../assets/journal/journal-brand-log-lock.svg'
 import { ApiRequestError } from '../../services/apiClient'
 import {
   exportJournalToTxt,
@@ -439,11 +439,16 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
           }}
           aria-label="Открыть журнал событий"
         >
-          <img className={styles.dockTriggerAsset} src={journalDockUrl} alt="" aria-hidden="true" />
-          <span className={styles.dockTriggerIcon} aria-hidden="true">
-            {'>'}
+          <span className={styles.dockTriggerMain}>
+            <img className={styles.dockTriggerLogo} src={journalBrandUrl} alt="" aria-hidden="true" />
+            <span className={styles.dockTriggerText}>
+              <span>ЖУРНАЛ</span>
+              <span>СОБЫТИЙ</span>
+            </span>
           </span>
-          <span className={styles.dockTriggerLabel}>Журнал</span>
+          <span className={styles.dockTriggerTail} aria-hidden="true">
+            <span className={styles.dockTriggerArrow}>{'>'}</span>
+          </span>
         </button>
       ) : null}
 
@@ -459,16 +464,12 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
           <aside className={styles.panel} aria-label="Журнал событий">
             <header className={styles.header}>
               <div className={styles.logoWrap}>
-                <span className={styles.logoBadge}>LOG</span>
-                <div className={styles.logoText}>
-                  <span className={styles.logoTitle}>ЖУРНАЛ СОБЫТИЙ</span>
-                  <span className={styles.logoCaption}>Технический мониторинг</span>
-                </div>
+                <img className={styles.logoBrand} src={journalBrandUrl} alt="" aria-hidden="true" />
+                <span className={styles.logoTitle}>ЖУРНАЛ СОБЫТИЙ</span>
               </div>
-
               <button
                 type="button"
-                className={styles.collapseButton}
+                className={styles.headerToggleButton}
                 onClick={handleClose}
                 aria-label="Свернуть журнал"
               >

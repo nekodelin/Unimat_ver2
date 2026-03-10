@@ -1,6 +1,7 @@
 .host {
-  --journal-collapsed-width: clamp(2.8rem, 3.8vw, 3.2rem);
-  --journal-expanded-width: clamp(24.5rem, 31vw, 29rem);
+  --journal-collapsed-width: clamp(8.8rem, 11vw, 9.8rem);
+  --journal-panel-width: clamp(24rem, 29vw, 27rem);
+  --journal-expanded-width: var(--journal-panel-width);
   position: relative;
   flex: 0 0 var(--journal-collapsed-width);
   width: var(--journal-collapsed-width);
@@ -21,42 +22,84 @@
 
 .dockTrigger {
   width: 100%;
-  min-height: clamp(3.1rem, 4.2vw, 3.55rem);
-  border: 1px solid #b8bdc4;
+  min-height: clamp(4.8rem, 6.6vw, 5.3rem);
+  border: 1px solid #c1c8d1;
   border-radius: 0.72rem;
-  background: linear-gradient(180deg, #eef1f5 0%, #dce1e8 100%);
-  color: #1b1d22;
-  padding: clamp(0.22rem, 0.45vw, 0.3rem) 0.15rem;
+  background: #e4e8ed;
+  color: #1e2228;
+  padding: 0;
   cursor: pointer;
   display: grid;
-  place-items: center;
-  gap: 0.1rem;
-  box-shadow: 0 0.3rem 0.8rem rgba(21, 25, 34, 0.12);
+  grid-template-columns: minmax(0, 1fr) clamp(1.9rem, 2.6vw, 2.15rem);
+  text-align: left;
+  margin-top: clamp(0.16rem, 0.36vw, 0.24rem);
+  overflow: hidden;
+  box-shadow: 0 0.28rem 0.72rem rgba(17, 20, 26, 0.16);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    transform 0.16s ease;
 }
 
-.dockTriggerAsset {
-  width: clamp(1.6rem, 1.8vw, 2rem);
+.dockTrigger:hover {
+  border-color: #b2bac5;
+  box-shadow: 0 0.35rem 0.9rem rgba(17, 20, 26, 0.2);
+}
+
+.dockTrigger:focus-visible {
+  outline: 2px solid rgba(208, 255, 0, 0.6);
+  outline-offset: 2px;
+}
+
+.dockTriggerMain {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: clamp(0.42rem, 0.8vw, 0.56rem) clamp(0.45rem, 0.95vw, 0.66rem);
+  background: linear-gradient(180deg, #edf0f4 0%, #e4e8ed 100%);
+}
+
+.dockTriggerLogo {
+  width: clamp(2.05rem, 2.5vw, 2.3rem);
   height: auto;
-  opacity: 0.74;
+  opacity: 1;
+  flex: 0 0 auto;
+  filter: brightness(1.08) saturate(1.03);
 }
 
-.dockTriggerIcon {
-  font-size: clamp(0.82rem, 1.1vw, 0.98rem);
+.dockTriggerText {
+  display: grid;
+  gap: 0.06rem;
+  min-width: 0;
+  color: #24282f;
+  font-size: clamp(0.62rem, 0.74vw, 0.69rem);
+  font-weight: 700;
+  line-height: 1.03;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.dockTriggerTail {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #2e353e 0%, #252c35 100%);
+  border-left: 1px solid #20262f;
+}
+
+.dockTriggerArrow {
+  color: #ffffff;
+  font-size: clamp(0.96rem, 1.1vw, 1.06rem);
   font-weight: 700;
   line-height: 1;
-  transform: translateX(1px);
-}
-
-.dockTriggerLabel {
-  font-size: clamp(0.56rem, 0.7vw, 0.66rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
 .overlay {
   position: relative;
-  width: 100%;
+  width: var(--journal-panel-width);
+  margin-left: 0;
   min-height: 0;
   height: min(calc(100dvh - clamp(5.4rem, 8vh, 6.6rem)), 57rem);
   min-height: clamp(31rem, 73vh, 44rem);
@@ -85,9 +128,10 @@
 }
 
 .header {
-  min-height: clamp(3.05rem, 4.3vw, 3.6rem);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: clamp(3rem, 4.2vw, 3.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid #c4c9d1;
   background: linear-gradient(180deg, #e6eaee 0%, #dfe4ea 100%);
 }
@@ -95,56 +139,51 @@
 .logoWrap {
   display: flex;
   align-items: center;
-  gap: 0.58rem;
+  gap: 0.6rem;
   min-width: 0;
-  padding: clamp(0.45rem, 0.8vw, 0.6rem) clamp(0.55rem, 1vw, 0.75rem);
+  padding: clamp(0.45rem, 0.8vw, 0.62rem) clamp(0.6rem, 1.1vw, 0.8rem);
 }
 
-.logoBadge {
-  width: fit-content;
-  border-radius: 0.24rem;
-  background: #d0ff00;
-  color: #12141a;
-  font-size: clamp(0.64rem, 0.86vw, 0.74rem);
-  font-weight: 800;
-  padding: 0.1rem 0.32rem;
+.logoBrand {
+  width: clamp(3rem, 3.9vw, 3.5rem);
+  height: auto;
   flex: 0 0 auto;
-}
-
-.logoText {
-  display: grid;
-  gap: 0.08rem;
-  min-width: 0;
+  filter: brightness(1.08) saturate(1.03);
 }
 
 .logoTitle {
-  font-size: clamp(0.92rem, 1.2vw, 1.04rem);
+  font-size: clamp(0.96rem, 1.25vw, 1.08rem);
   font-weight: 700;
   line-height: 1;
-  color: #2a2e34;
+  color: #262a31;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
-.logoCaption {
-  font-size: clamp(0.64rem, 0.78vw, 0.72rem);
-  color: #5e6570;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.collapseButton {
-  width: clamp(2rem, 2.8vw, 2.35rem);
-  min-width: clamp(2rem, 2.8vw, 2.35rem);
+.headerToggleButton {
+  align-self: stretch;
+  width: clamp(2rem, 2.7vw, 2.3rem);
   border: none;
+  border-left: 1px solid #bcc2cb;
+  background: linear-gradient(180deg, #2e353e 0%, #252c35 100%);
   color: #ffffff;
-  background: #2a2a2a;
-  cursor: pointer;
-  font-size: clamp(0.95rem, 1.45vw, 1.25rem);
+  display: grid;
+  place-items: center;
+  font-size: clamp(0.94rem, 1.15vw, 1.02rem);
+  font-weight: 700;
   line-height: 1;
+  cursor: pointer;
+}
+
+.headerToggleButton:hover {
+  background: linear-gradient(180deg, #333b45 0%, #2a313b 100%);
+}
+
+.headerToggleButton:focus-visible {
+  outline: 2px solid rgba(208, 255, 0, 0.6);
+  outline-offset: -2px;
 }
 
 .introScreen {
@@ -573,25 +612,33 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: auto;
+    width: clamp(1.35rem, 5.2vw, 1.6rem);
     min-height: 0;
     border: none;
     border-radius: 0;
     background: transparent;
     padding: 0;
+    margin-top: 0;
     box-shadow: none;
-    gap: 0;
-  }
-
-  .dockTriggerAsset {
     display: block;
-    width: clamp(4rem, 15vw, 5.2rem);
-    opacity: 1;
   }
 
-  .dockTriggerIcon,
-  .dockTriggerLabel {
+  .dockTriggerMain {
     display: none;
+  }
+
+  .dockTriggerTail {
+    width: 100%;
+    border-left: none;
+    background: transparent;
+    display: block;
+  }
+
+  .dockTriggerArrow {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: clamp(0.95rem, 3.4vw, 1.08rem);
   }
 
   .overlay {
@@ -601,6 +648,7 @@
     z-index: 120;
     width: auto;
     height: auto;
+    margin-left: 0;
     min-height: 0;
     animation: none;
   }
@@ -629,12 +677,17 @@
     min-height: clamp(3.2rem, 8.5vh, 4.3rem);
   }
 
-  .logoTitle {
-    font-size: clamp(1rem, 4.8vw, 1.5rem);
+  .headerToggleButton {
+    width: 2rem;
+    font-size: 1.08rem;
   }
 
-  .logoCaption {
-    font-size: clamp(0.64rem, 2.2vw, 0.76rem);
+  .logoBrand {
+    width: clamp(3.1rem, 10vw, 3.6rem);
+  }
+
+  .logoTitle {
+    font-size: clamp(1rem, 4.8vw, 1.5rem);
   }
 
   .authCard {
@@ -676,12 +729,6 @@
 
   .logoWrap {
     padding: 0.45rem 0.55rem;
-  }
-
-  .collapseButton {
-    width: 2rem;
-    min-width: 2rem;
-    font-size: 1.1rem;
   }
 
   .tableHead,
