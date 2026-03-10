@@ -76,6 +76,21 @@ const INTERNAL_ID_BY_SIGNAL_ID = new Map(
 const INTERNAL_ID_BY_CHANNEL_INDEX = new Map(
   TECHNICAL_SIGNAL_DEFS.map((signal) => [signal.channel.trim().toUpperCase(), signal.id]),
 )
+const DEV_CHANNEL_DEBUG_ENABLED = import.meta.env.DEV
+const DEBUG_MODULE_KEY = 'QL6C'
+const DEBUG_CHANNEL_INDICES = new Set(['6', '7'])
+
+function shouldDebugChannel(moduleKey: string, channelIndex: string): boolean {
+  return moduleKey === DEBUG_MODULE_KEY && DEBUG_CHANNEL_INDICES.has(channelIndex)
+}
+
+function logDebugChannel(stage: 'incoming' | 'ui', payload: Record<string, unknown>): void {
+  if (!DEV_CHANNEL_DEBUG_ENABLED) {
+    return
+  }
+
+  console.debug(`[technical-debug][${DEBUG_MODULE_KEY}] ${stage}`, payload)
+}
 
 function normalizeKey(value: string): string {
   return value
@@ -700,6 +715,23 @@ function normalizeDecodedChannels(
 
   backendChannels.forEach((channelRaw) => {
     const identity = resolveChannelIdentity(channelRaw)
+    const debugChannel = shouldDebugChannel(identity.moduleKey, identity.channelIndex)
+
+    if (debugChannel) {
+      logDebugChannel('incoming', {
+        id: identity.id,
+        channelIndex: identity.channelIndex,
+        channelKey: identity.channelKey,
+        signalId: asString(channelRaw.signalId, identity.signalId),
+        sourceTopic: asString(channelRaw.topic),
+        status: asString(channelRaw.status),
+        yellowLed: pickBoolean(asRecord(channelRaw), ['yellow_led', 'yellowLed']),
+        redLed: pickBoolean(asRecord(channelRaw), ['red_led', 'redLed']),
+        isFault: asBoolean(channelRaw.isFault),
+        severity: asString(channelRaw.severity),
+      })
+    }
+
     const backendStatus = resolveBackendStatus(channelRaw.status)
     const isFaultByStatus = backendStatus === 'short_circuit'
     const isFaultByPayload = asBoolean(channelRaw.isFault)
@@ -781,6 +813,22 @@ function normalizeDecodedChannels(
       rowColor,
     }
 
+    if (debugChannel) {
+      logDebugChannel('ui', {
+        id: normalized.id,
+        channelIndex: normalized.channelIndex,
+        channelKey: normalized.channelKey,
+        signalId: normalized.signalId,
+        topic: normalized.topic,
+        backendStatus: normalized.backendStatus,
+        status: normalized.status,
+        visualRow: normalized.rowColor,
+        yellowLed: normalized.yellowLed,
+        redLed: normalized.redLed,
+        faultText: normalized.faultText,
+      })
+    }
+
     const current = byId.get(identity.id)
     if (!current) {
       byId.set(identity.id, normalized)
@@ -791,11 +839,11 @@ function normalizeDecodedChannels(
     const candidateIsRaw = normalized.topic === RAW_DECODER_TOPIC
 
     if (candidateIsRaw && !currentIsRaw) {
-      byId.set(identity.id, normalized)
       return
     }
 
     if (currentIsRaw && !candidateIsRaw) {
+      byId.set(identity.id, normalized)
       return
     }
 

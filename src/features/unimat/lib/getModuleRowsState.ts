@@ -6,6 +6,9 @@ const SIGNAL_ALIAS_CANONICAL: Record<string, string> = {
   '1s202a': '1s202b',
   '1s202b': '1s202b',
 }
+const DEV_CHANNEL_DEBUG_ENABLED = import.meta.env.DEV
+const DEBUG_MODULE_KEY = 'QL6C'
+const DEBUG_CHANNEL_INDICES = new Set(['6', '7'])
 
 function normalizeToken(value: string): string {
   return value.trim().toLowerCase()
@@ -81,6 +84,24 @@ export function getModuleRowsState(
         ? 'normal'
         : 'inactive'
     const faultText = redLed && channel ? getChannelFaultText(channel) : ''
+
+    if (
+      DEV_CHANNEL_DEBUG_ENABLED &&
+      row.moduleKey.trim().toUpperCase() === DEBUG_MODULE_KEY &&
+      DEBUG_CHANNEL_INDICES.has(row.channelIndex.trim().toUpperCase())
+    ) {
+      console.debug(`[technical-debug][${DEBUG_MODULE_KEY}] row-ui`, {
+        channelIndex: row.channelIndex,
+        channelKey: channel?.channelKey ?? `${row.moduleKey}${row.channelIndex}`,
+        signalId: channel?.signalId ?? row.signalId ?? '',
+        hasChannelData: channel !== null,
+        decodedStatus,
+        visualState,
+        yellowLed,
+        redLed,
+        faultText,
+      })
+    }
 
     return {
       id: row.id,
