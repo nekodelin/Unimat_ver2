@@ -4,7 +4,12 @@ export interface JournalEntry {
   id: string
   timestamp: string
   level: JournalLevel
+  type?: string
   source: string
+  element?: string
+  oldState?: string
+  newState?: string
+  description?: string
   channel: string
   title: string
   message: string

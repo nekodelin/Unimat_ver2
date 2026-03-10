@@ -1,5 +1,19 @@
-import { useMemo, useReducer } from 'react'
+import { type FormEvent, useReducer, useState } from 'react'
 import journalDockUrl from '../../assets/raw/Техническая вкладка/1 сост.svg'
+import { ApiRequestError } from '../../services/apiClient'
+import {
+  exportJournalToTxt,
+  fetchJournalEntries,
+  fetchJournalMe,
+  loginJournal,
+  logoutJournal,
+  type JournalUser,
+} from '../../services/journalApi'
+import {
+  clearJournalAuthToken,
+  getJournalAuthToken,
+  setJournalAuthToken,
+} from '../../services/journalAuthStorage'
 import type { JournalEntry } from '../../types/journal'
 import {
   createInitialTechnicalJournalState,
@@ -12,43 +26,288 @@ interface TechnicalJournalFlowProps {
   entries: JournalEntry[]
 }
 
-function formatTimestamp(timestamp: string): string {
+function formatDateTime(timestamp: string): string {
   const date = new Date(timestamp)
 
   if (Number.isNaN(date.getTime())) {
-    return '--:--:--'
+    return '--'
   }
 
-  return date.toLocaleTimeString('ru-RU', {
+  return date.toLocaleString('ru-RU', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   })
 }
 
-export function TechnicalJournalFlow({ entries }: TechnicalJournalFlowProps) {
+function formatNowForFileName(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day}_${hours}-${minutes}`
+}
+
+function defaultExportFileName(): string {
+  return `journal_${formatNowForFileName(new Date())}.txt`
+}
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return 'Неизвестная ошибка'
+}
+
+function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof ApiRequestError && error.status === 401
+}
+
+function isDateRangeValid(dateFrom: string, dateTo: string): boolean {
+  if (!dateFrom || !dateTo) {
+    return true
+  }
+
+  return dateFrom <= dateTo
+}
+
+function downloadBlob(blob: Blob, fileName: string): void {
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = objectUrl
+  link.download = fileName
+  document.body.append(link)
+  link.click()
+  link.remove()
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(objectUrl)
+  }, 0)
+}
+
+export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlowProps) {
+  void _entries
+
   const [state, dispatch] = useReducer(technicalJournalReducer, undefined, createInitialTechnicalJournalState)
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([])
+  const [currentUser, setCurrentUser] = useState<JournalUser | null>(null)
+  const [isAuthChecking, setIsAuthChecking] = useState(false)
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const isExpanded = state.screen !== TechnicalJournalScreens.Collapsed
 
-  const visibleEntries = useMemo(() => {
-    const preparedEntries = state.mode === 'current' ? entries.filter((entry) => entry.level !== 'info') : entries
+  const handleUnauthorized = (message = 'Сессия завершена. Войдите снова.'): void => {
+    clearJournalAuthToken()
+    setCurrentUser(null)
+    setJournalEntries([])
+    setIsAuthChecking(false)
+    setIsAuthSubmitting(false)
+    setIsLoading(false)
+    setIsExporting(false)
+    setIsLoggingOut(false)
+    setError(message)
+    dispatch({ type: 'SHOW_AUTH' })
+  }
 
-    if (preparedEntries.length > 0) {
-      return preparedEntries
+  const loadJournal = async (dateFrom?: string, dateTo?: string): Promise<void> => {
+    const token = getJournalAuthToken()
+
+    if (!token) {
+      handleUnauthorized()
+      return
     }
 
-    return [
-      {
-        id: 'journal-placeholder',
-        timestamp: new Date().toISOString(),
-        level: 'info' as const,
-        source: 'Система',
-        channel: '-',
-        title: 'Отказов не обнаружено',
-        message: 'По выбранному режиму активных событий не найдено',
-      },
-    ]
-  }, [entries, state.mode])
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const loadedEntries = await fetchJournalEntries({
+        token,
+        dateFrom,
+        dateTo,
+      })
+
+      setJournalEntries(loadedEntries)
+    } catch (requestError) {
+      if (isUnauthorizedError(requestError)) {
+        handleUnauthorized()
+        return
+      }
+
+      setJournalEntries([])
+      setError(`Не удалось загрузить журнал: ${toErrorMessage(requestError)}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleOpen = async (): Promise<void> => {
+    dispatch({ type: 'OPEN' })
+    setError(null)
+
+    const token = getJournalAuthToken()
+    if (!token) {
+      setCurrentUser(null)
+      setJournalEntries([])
+      dispatch({ type: 'SHOW_AUTH' })
+      return
+    }
+
+    setIsAuthChecking(true)
+
+    try {
+      const user = await fetchJournalMe({ token })
+      setCurrentUser(user)
+      dispatch({ type: 'SHOW_JOURNAL' })
+      await loadJournal(state.dateFrom, state.dateTo)
+    } catch (requestError) {
+      if (isUnauthorizedError(requestError)) {
+        handleUnauthorized()
+        return
+      }
+
+      setCurrentUser(null)
+      setJournalEntries([])
+      dispatch({ type: 'SHOW_AUTH' })
+      setError(`Не удалось проверить текущую сессию: ${toErrorMessage(requestError)}`)
+    } finally {
+      setIsAuthChecking(false)
+    }
+  }
+
+  const handleClose = (): void => {
+    dispatch({ type: 'CLOSE' })
+    setError(null)
+    setIsAuthChecking(false)
+    setIsAuthSubmitting(false)
+    setIsLoading(false)
+    setIsExporting(false)
+    setIsLoggingOut(false)
+  }
+
+  const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault()
+
+    const login = state.login.trim()
+    const password = state.password
+
+    if (!login || !password) {
+      setError('Введите логин и пароль.')
+      return
+    }
+
+    setIsAuthSubmitting(true)
+    setError(null)
+
+    try {
+      const authResult = await loginJournal({ login, password })
+      setJournalAuthToken(authResult.token)
+
+      let user = authResult.user
+      try {
+        user = await fetchJournalMe({ token: authResult.token })
+      } catch (requestError) {
+        if (isUnauthorizedError(requestError)) {
+          handleUnauthorized()
+          return
+        }
+      }
+
+      setCurrentUser(user)
+      dispatch({ type: 'SHOW_JOURNAL' })
+      await loadJournal(state.dateFrom, state.dateTo)
+    } catch (requestError) {
+      if (isUnauthorizedError(requestError)) {
+        handleUnauthorized()
+        return
+      }
+
+      setError(`Не удалось выполнить вход: ${toErrorMessage(requestError)}`)
+    } finally {
+      setIsAuthSubmitting(false)
+    }
+  }
+
+  const handleApplyFilters = (): void => {
+    if (!isDateRangeValid(state.dateFrom, state.dateTo)) {
+      setError('Дата "от" должна быть меньше или равна дате "до".')
+      return
+    }
+
+    void loadJournal(state.dateFrom, state.dateTo)
+  }
+
+  const handleResetFilters = (): void => {
+    dispatch({ type: 'RESET_FILTERS' })
+    void loadJournal(undefined, undefined)
+  }
+
+  const handleExport = async (): Promise<void> => {
+    if (!isDateRangeValid(state.dateFrom, state.dateTo)) {
+      setError('Исправьте диапазон дат перед выгрузкой.')
+      return
+    }
+
+    const token = getJournalAuthToken()
+    if (!token) {
+      handleUnauthorized()
+      return
+    }
+
+    setIsExporting(true)
+    setError(null)
+
+    try {
+      const exportResult = await exportJournalToTxt({
+        token,
+        dateFrom: state.dateFrom,
+        dateTo: state.dateTo,
+      })
+
+      downloadBlob(exportResult.blob, exportResult.fileName || defaultExportFileName())
+    } catch (requestError) {
+      if (isUnauthorizedError(requestError)) {
+        handleUnauthorized()
+        return
+      }
+
+      setError(`Не удалось выгрузить журнал: ${toErrorMessage(requestError)}`)
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleLogout = async (): Promise<void> => {
+    const token = getJournalAuthToken()
+    setIsLoggingOut(true)
+
+    try {
+      if (token) {
+        await logoutJournal({ token })
+      }
+    } catch (requestError) {
+      if (!isUnauthorizedError(requestError)) {
+        setError(`Не удалось завершить сеанс: ${toErrorMessage(requestError)}`)
+      }
+    } finally {
+      clearJournalAuthToken()
+      setCurrentUser(null)
+      setJournalEntries([])
+      dispatch({ type: 'SHOW_AUTH' })
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <div className={styles.host}>
@@ -56,7 +315,9 @@ export function TechnicalJournalFlow({ entries }: TechnicalJournalFlowProps) {
         <button
           type="button"
           className={styles.dockTrigger}
-          onClick={() => dispatch({ type: 'OPEN' })}
+          onClick={() => {
+            void handleOpen()
+          }}
           aria-label="Открыть журнал событий"
         >
           <img src={journalDockUrl} alt="" aria-hidden="true" />
@@ -68,7 +329,7 @@ export function TechnicalJournalFlow({ entries }: TechnicalJournalFlowProps) {
           <button
             type="button"
             className={styles.backdrop}
-            onClick={() => dispatch({ type: 'CLOSE' })}
+            onClick={handleClose}
             aria-label="Свернуть журнал"
           />
 
@@ -82,164 +343,177 @@ export function TechnicalJournalFlow({ entries }: TechnicalJournalFlowProps) {
               <button
                 type="button"
                 className={styles.collapseButton}
-                onClick={() => dispatch({ type: 'CLOSE' })}
+                onClick={handleClose}
                 aria-label="Свернуть журнал"
               >
                 <span aria-hidden="true">‹</span>
               </button>
             </header>
 
-            {state.screen === TechnicalJournalScreens.Intro ? (
-              <div className={styles.introScreen}>
-                <p>Для просмотра журнала откройте окно авторизации.</p>
-                <button
-                  type="button"
-                  className={styles.primaryButton}
-                  onClick={() => dispatch({ type: 'GO_AUTH' })}
-                >
-                  Войти
-                </button>
-              </div>
-            ) : null}
-
             {state.screen === TechnicalJournalScreens.Auth ? (
-              <form
-                className={styles.authScreen}
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  dispatch({ type: 'SUBMIT_AUTH' })
-                }}
-              >
-                <label className={styles.field}>
-                  <span>Учётная запись</span>
-                  <input
-                    type="text"
-                    value={state.login}
-                    onChange={(event) =>
-                      dispatch({
-                        type: 'SET_LOGIN',
-                        value: event.currentTarget.value,
-                      })
-                    }
-                    placeholder="Введите логин"
-                  />
-                </label>
-
-                <label className={styles.field}>
-                  <span>Пароль</span>
-                  <input
-                    type="password"
-                    value={state.password}
-                    onChange={(event) =>
-                      dispatch({
-                        type: 'SET_PASSWORD',
-                        value: event.currentTarget.value,
-                      })
-                    }
-                    placeholder="Введите пароль"
-                  />
-                </label>
-
-                <div className={styles.authActions}>
-                  <button type="submit" className={styles.primaryButton}>
-                    Вход
-                  </button>
+              isAuthChecking ? (
+                <div className={styles.introScreen}>
+                  <p>Проверка авторизации...</p>
                 </div>
-              </form>
-            ) : null}
+              ) : (
+                <form className={styles.authScreen} onSubmit={(event) => void handleLoginSubmit(event)}>
+                  <label className={styles.field}>
+                    <span>Логин</span>
+                    <input
+                      type="text"
+                      autoComplete="username"
+                      value={state.login}
+                      onChange={(event) =>
+                        dispatch({
+                          type: 'SET_LOGIN',
+                          value: event.currentTarget.value,
+                        })
+                      }
+                      placeholder="Введите логин"
+                    />
+                  </label>
 
-            {state.screen === TechnicalJournalScreens.ModeSelect ? (
-              <div className={styles.modeScreen}>
-                <button
-                  type="button"
-                  className={styles.modeCurrentButton}
-                  onClick={() => dispatch({ type: 'OPEN_CURRENT_FAULTS' })}
-                >
-                  Текущие отказы
-                </button>
+                  <label className={styles.field}>
+                    <span>Пароль</span>
+                    <input
+                      type="password"
+                      autoComplete="current-password"
+                      value={state.password}
+                      onChange={(event) =>
+                        dispatch({
+                          type: 'SET_PASSWORD',
+                          value: event.currentTarget.value,
+                        })
+                      }
+                      placeholder="Введите пароль"
+                    />
+                  </label>
 
-                <div className={styles.periodCard}>
-                  <label htmlFor="journal-period">Период отказов</label>
-                  <input
-                    id="journal-period"
-                    type="text"
-                    value={state.periodLabel}
-                    onChange={(event) =>
-                      dispatch({
-                        type: 'SET_PERIOD_LABEL',
-                        value: event.currentTarget.value,
-                      })
-                    }
-                  />
-                  <button
-                    type="button"
-                    className={styles.secondaryButton}
-                    onClick={() => dispatch({ type: 'OPEN_PERIOD_FAULTS' })}
-                  >
-                    Применить
-                  </button>
-                </div>
+                  <div className={styles.authHint}>Для первой версии: admin / admin</div>
 
-                <button
-                  type="button"
-                  className={styles.exitButton}
-                  onClick={() => dispatch({ type: 'CLOSE' })}
-                >
-                  Выйти
-                </button>
-              </div>
+                  <div className={styles.authActions}>
+                    <button type="submit" className={styles.primaryButton} disabled={isAuthSubmitting}>
+                      {isAuthSubmitting ? 'Вход...' : 'Войти'}
+                    </button>
+                  </div>
+
+                  {error ? <p className={styles.errorText}>{error}</p> : null}
+                </form>
+              )
             ) : null}
 
             {state.screen === TechnicalJournalScreens.JournalView ? (
               <div className={styles.journalScreen}>
                 <div className={styles.toolbar}>
-                  <div className={styles.toolbarMode}>
-                    {state.mode === 'current' ? 'Текущие отказы' : 'Выбранный период'}
+                  <div className={styles.toolbarTop}>
+                    <div className={styles.toolbarMode}>Журнал событий</div>
+                    <div className={styles.toolbarPeriod}>
+                      {currentUser ? `Вы вошли как ${currentUser.displayName}` : 'Пользователь не определен'}
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.toolbarButton}
+                      onClick={() => {
+                        void handleLogout()
+                      }}
+                      disabled={isLoggingOut}
+                    >
+                      {isLoggingOut ? 'Выход...' : 'Выйти'}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.downloadButton}
+                      onClick={() => {
+                        void handleExport()
+                      }}
+                      disabled={isExporting || isLoading}
+                    >
+                      {isExporting ? 'Выгрузка...' : 'Скачать TXT'}
+                    </button>
                   </div>
 
-                  <div className={styles.toolbarPeriod}>{state.periodLabel}</div>
+                  <div className={styles.filterRow}>
+                    <label className={styles.filterField}>
+                      <span>Дата от</span>
+                      <input
+                        type="date"
+                        value={state.dateFrom}
+                        onChange={(event) =>
+                          dispatch({ type: 'SET_DATE_FROM', value: event.currentTarget.value })
+                        }
+                      />
+                    </label>
 
-                  <button
-                    type="button"
-                    className={styles.toolbarButton}
-                    onClick={() => dispatch({ type: 'BACK_TO_MODE_SELECT' })}
-                  >
-                    Изменить режим
-                  </button>
+                    <label className={styles.filterField}>
+                      <span>Дата до</span>
+                      <input
+                        type="date"
+                        value={state.dateTo}
+                        onChange={(event) => dispatch({ type: 'SET_DATE_TO', value: event.currentTarget.value })}
+                      />
+                    </label>
 
-                  <button type="button" className={styles.downloadButton}>
-                    Скачать файл
-                  </button>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={handleApplyFilters}
+                      disabled={isLoading}
+                    >
+                      Применить
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={handleResetFilters}
+                      disabled={isLoading}
+                    >
+                      Сбросить
+                    </button>
+                  </div>
                 </div>
 
                 <div className={styles.tableHead}>
-                  <span>Время</span>
+                  <span>Дата и время</span>
+                  <span>Тип</span>
                   <span>Источник</span>
-                  <span>Канал</span>
-                  <span>Событие</span>
+                  <span>Элемент</span>
+                  <span>Старое</span>
+                  <span>Новое</span>
+                  <span>Описание</span>
                 </div>
 
                 <div className={styles.tableBody}>
-                  {visibleEntries.map((entry) => (
-                    <article
-                      key={entry.id}
-                      className={`${styles.eventRow} ${
-                        entry.level === 'error'
-                          ? styles.eventError
-                          : entry.level === 'warning'
-                            ? styles.eventWarning
-                            : styles.eventInfo
-                      }`}
-                    >
-                      <span className={styles.eventTime}>{formatTimestamp(entry.timestamp)}</span>
-                      <span className={styles.eventSource}>{entry.source}</span>
-                      <span className={styles.eventChannel}>{entry.channel}</span>
-                      <div className={styles.eventContent}>
-                        <strong>{entry.title}</strong>
-                        <p>{entry.message}</p>
-                      </div>
-                    </article>
-                  ))}
+                  {isLoading ? <p className={styles.stateMessage}>Загрузка журнала...</p> : null}
+                  {!isLoading && error ? <p className={styles.errorText}>{error}</p> : null}
+                  {!isLoading && !error && journalEntries.length === 0 ? (
+                    <p className={styles.stateMessage}>Записей за выбранный период нет.</p>
+                  ) : null}
+
+                  {!isLoading && !error
+                    ? journalEntries.map((entry) => (
+                        <article
+                          key={entry.id}
+                          className={`${styles.eventRow} ${
+                            entry.level === 'error'
+                              ? styles.eventError
+                              : entry.level === 'warning'
+                                ? styles.eventWarning
+                                : styles.eventInfo
+                          }`}
+                        >
+                          <span className={styles.eventCell}>{formatDateTime(entry.timestamp)}</span>
+                          <span className={styles.eventCell}>{entry.type || entry.title || '-'}</span>
+                          <span className={styles.eventCell}>{entry.source || '-'}</span>
+                          <span className={styles.eventCell}>{entry.element || entry.channel || '-'}</span>
+                          <span className={styles.eventCell}>{entry.oldState || '-'}</span>
+                          <span className={styles.eventCell}>{entry.newState || '-'}</span>
+                          <span className={styles.eventCell}>
+                            {entry.description || entry.message || entry.reason || '-'}
+                          </span>
+                        </article>
+                      ))
+                    : null}
                 </div>
               </div>
             ) : null}

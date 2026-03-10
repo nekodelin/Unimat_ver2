@@ -1,43 +1,38 @@
 export const TechnicalJournalScreens = {
   Collapsed: 'collapsed',
-  Intro: 'intro',
   Auth: 'auth',
-  ModeSelect: 'mode_select',
   JournalView: 'journal_view',
 } as const
 
 export type TechnicalJournalScreen =
   (typeof TechnicalJournalScreens)[keyof typeof TechnicalJournalScreens]
 
-export type JournalViewMode = 'current' | 'period'
-
 export interface TechnicalJournalState {
   screen: TechnicalJournalScreen
-  mode: JournalViewMode
   login: string
   password: string
-  periodLabel: string
+  dateFrom: string
+  dateTo: string
 }
 
 export type TechnicalJournalAction =
   | { type: 'OPEN' }
   | { type: 'CLOSE' }
-  | { type: 'GO_AUTH' }
+  | { type: 'SHOW_AUTH' }
+  | { type: 'SHOW_JOURNAL' }
   | { type: 'SET_LOGIN'; value: string }
   | { type: 'SET_PASSWORD'; value: string }
-  | { type: 'SUBMIT_AUTH' }
-  | { type: 'OPEN_CURRENT_FAULTS' }
-  | { type: 'SET_PERIOD_LABEL'; value: string }
-  | { type: 'OPEN_PERIOD_FAULTS' }
-  | { type: 'BACK_TO_MODE_SELECT' }
+  | { type: 'SET_DATE_FROM'; value: string }
+  | { type: 'SET_DATE_TO'; value: string }
+  | { type: 'RESET_FILTERS' }
 
 export function createInitialTechnicalJournalState(): TechnicalJournalState {
   return {
     screen: TechnicalJournalScreens.Collapsed,
-    mode: 'current',
     login: '',
     password: '',
-    periodLabel: '12.12.2025 - 12.01.2026',
+    dateFrom: '',
+    dateTo: '',
   }
 }
 
@@ -51,17 +46,16 @@ export function technicalJournalReducer(
         return state
       }
 
-      return { ...state, screen: TechnicalJournalScreens.Intro }
+      return { ...state, screen: TechnicalJournalScreens.Auth }
 
     case 'CLOSE':
       return { ...state, screen: TechnicalJournalScreens.Collapsed }
 
-    case 'GO_AUTH':
-      if (state.screen !== TechnicalJournalScreens.Intro) {
-        return state
-      }
+    case 'SHOW_AUTH':
+      return { ...state, screen: TechnicalJournalScreens.Auth, password: '' }
 
-      return { ...state, screen: TechnicalJournalScreens.Auth }
+    case 'SHOW_JOURNAL':
+      return { ...state, screen: TechnicalJournalScreens.JournalView, password: '' }
 
     case 'SET_LOGIN':
       return { ...state, login: action.value }
@@ -69,44 +63,14 @@ export function technicalJournalReducer(
     case 'SET_PASSWORD':
       return { ...state, password: action.value }
 
-    case 'SUBMIT_AUTH':
-      if (state.screen !== TechnicalJournalScreens.Auth) {
-        return state
-      }
+    case 'SET_DATE_FROM':
+      return { ...state, dateFrom: action.value }
 
-      return { ...state, screen: TechnicalJournalScreens.ModeSelect }
+    case 'SET_DATE_TO':
+      return { ...state, dateTo: action.value }
 
-    case 'OPEN_CURRENT_FAULTS':
-      if (state.screen !== TechnicalJournalScreens.ModeSelect) {
-        return state
-      }
-
-      return {
-        ...state,
-        mode: 'current',
-        screen: TechnicalJournalScreens.JournalView,
-      }
-
-    case 'SET_PERIOD_LABEL':
-      return { ...state, periodLabel: action.value }
-
-    case 'OPEN_PERIOD_FAULTS':
-      if (state.screen !== TechnicalJournalScreens.ModeSelect) {
-        return state
-      }
-
-      return {
-        ...state,
-        mode: 'period',
-        screen: TechnicalJournalScreens.JournalView,
-      }
-
-    case 'BACK_TO_MODE_SELECT':
-      if (state.screen !== TechnicalJournalScreens.JournalView) {
-        return state
-      }
-
-      return { ...state, screen: TechnicalJournalScreens.ModeSelect }
+    case 'RESET_FILTERS':
+      return { ...state, dateFrom: '', dateTo: '' }
 
     default:
       return state
