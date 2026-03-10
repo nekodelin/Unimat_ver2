@@ -1,6 +1,7 @@
 import type { ChannelState } from '../../../types/channel'
 import type { DecodedChannelStatus, UnimatModuleRowState, UnimatTechRowConfig } from '../../../types/unimat'
 import { getChannelFaultText } from './getChannelFaultText'
+import { normalizeLedState } from './normalizeLedState'
 
 const SIGNAL_ALIAS_CANONICAL: Record<string, string> = {
   '1s202a': '1s202b',
@@ -38,29 +39,6 @@ function resolveDecodedStatus(channel: ChannelState | null): DecodedChannelStatu
   return channel.status === 'normal' ? 'normal' : 'unknown'
 }
 
-function resolveVisualState(
-  channel: ChannelState | null,
-  decodedStatus: DecodedChannelStatus | 'no_data',
-): UnimatModuleRowState['visualState'] {
-  if (decodedStatus === 'no_data') {
-    return 'inactive'
-  }
-
-  if (
-    channel?.isFault === true ||
-    decodedStatus === 'open_circuit' ||
-    decodedStatus === 'short_circuit'
-  ) {
-    return 'fault'
-  }
-
-  if (decodedStatus === 'unknown') {
-    return 'warning'
-  }
-
-  return 'normal'
-}
-
 function resolveRowChannel(
   moduleChannels: ChannelState[],
   row: UnimatTechRowConfig,
@@ -96,8 +74,21 @@ export function getModuleRowsState(
   return rowsConfig.map((row) => {
     const channel = resolveRowChannel(moduleChannels, row)
     const decodedStatus = resolveDecodedStatus(channel)
-    const visualState = resolveVisualState(channel, decodedStatus)
-    const faultText = visualState === 'normal' || visualState === 'inactive' ? '' : getChannelFaultText(channel)
+    const hasData = decodedStatus !== 'no_data' && decodedStatus !== 'unknown'
+    const isFault =
+      channel !== null &&
+      (channel.isFault === true || decodedStatus === 'open_circuit' || decodedStatus === 'short_circuit')
+    const ledState = normalizeLedState({
+      hasData,
+      isFault,
+      faultText: isFault ? getChannelFaultText(channel) : '',
+      channelLabel: row.channelIndex,
+    })
+    const visualState: UnimatModuleRowState['visualState'] = ledState.red
+      ? 'fault'
+      : ledState.yellow
+        ? 'normal'
+        : 'inactive'
 
     return {
       id: row.id,
@@ -108,7 +99,7 @@ export function getModuleRowsState(
       title: row.title,
       visualState,
       decodedStatus,
-      faultText,
+      faultText: ledState.faultText,
       channel,
     }
   })

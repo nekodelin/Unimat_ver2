@@ -4,7 +4,7 @@ export type TrainZonesState = 'normal' | 'warning' | 'fault'
 
 export type DecodedChannelStatus = 'normal' | 'open_circuit' | 'short_circuit' | 'unknown'
 
-export type ModuleRowVisualState = 'normal' | 'warning' | 'fault' | 'inactive'
+export type ModuleRowVisualState = 'normal' | 'fault' | 'inactive'
 
 export interface UnimatTechRowConfig {
   id: string

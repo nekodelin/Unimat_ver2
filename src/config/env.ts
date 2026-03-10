@@ -37,16 +37,17 @@ function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '')
 }
 
+const devModeEnabled = normalizeBoolean(import.meta.env.VITE_DEV_MODE, import.meta.env.DEV)
+const mockEnabledByConfig = normalizeBoolean(
+  import.meta.env.VITE_ENABLE_MOCK,
+  normalizeBoolean(import.meta.env.VITE_USE_MOCKS, false),
+)
+
 export const envConfig: FrontendEnvConfig = {
   appEnv: normalizeAppEnv(import.meta.env.VITE_APP_ENV),
   apiBaseUrl: trimTrailingSlash((import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000').trim()),
   wsBaseUrl: trimTrailingSlash((import.meta.env.VITE_WS_BASE_URL ?? 'ws://localhost:8000').trim()),
-  useMocks:
-    import.meta.env.DEV &&
-    normalizeBoolean(
-      import.meta.env.VITE_ENABLE_MOCK,
-      normalizeBoolean(import.meta.env.VITE_USE_MOCKS, false),
-    ),
+  useMocks: devModeEnabled && mockEnabledByConfig,
   debugApi: normalizeBoolean(import.meta.env.VITE_DEBUG_API, false),
   pollFallbackMs: normalizeNumber(import.meta.env.VITE_POLL_FALLBACK_MS, 5000),
   wsReconnectDelayMs: 2500,

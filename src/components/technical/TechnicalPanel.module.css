@@ -100,10 +100,34 @@
 }
 
 .boardHeader {
-  justify-content: space-around;
+  justify-content: center;
+  gap: clamp(0.45rem, 0.85vw, 0.85rem);
   background: #1f2736;
   color: #eff0f2;
   border-bottom: none;
+}
+
+.boardBitBadge {
+  width: clamp(1.05rem, 1.3vw, 1.35rem);
+  height: clamp(1.05rem, 1.3vw, 1.35rem);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.72rem, 0.95vw, 0.9rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.boardBitYellow {
+  border-color: #b89d1a;
+  color: #ffda00;
+}
+
+.boardBitRed {
+  border-color: #9b1212;
+  color: #ff8a8a;
 }
 
 .leftRow,

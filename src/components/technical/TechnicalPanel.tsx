@@ -34,7 +34,7 @@ export function TechnicalPanel({
 
   const isPrimaryBoardTab = activeBoardTab === 'QL6C'
   const faultCount = rows.filter((row) => row.visualState === 'fault').length
-  const hasPrimaryBoardData = rows.some((row) => row.channel !== null)
+  const hasPrimaryBoardData = rows.some((row) => row.visualState !== 'inactive')
   const primaryBoardTabStatus: BoardTabStatus =
     faultCount > 0 ? 'fault' : hasPrimaryBoardData ? 'normal' : 'unknown'
   const secondaryBoardTabStatus: BoardTabStatus = 'unknown'
@@ -91,16 +91,15 @@ export function TechnicalPanel({
             <div className={styles.grid}>
               <div className={styles.leftHeader}>Органы управления</div>
               <div className={styles.boardHeader}>
-                <span>1</span>
-                <span>0</span>
+                <span className={`${styles.boardBitBadge} ${styles.boardBitYellow}`}>1</span>
+                <span className={`${styles.boardBitBadge} ${styles.boardBitRed}`}>0</span>
               </div>
               <div className={styles.rightHeader}>Неисправность</div>
 
               {rows.map((row) => {
                 const isFault = row.visualState === 'fault'
-                const isWarning = row.visualState === 'warning'
-                const isMuted = row.visualState === 'inactive' || isWarning
-                const yellowLampOn = row.visualState === 'normal' || row.visualState === 'warning'
+                const isMuted = row.visualState === 'inactive'
+                const yellowLampOn = row.visualState === 'normal' || row.visualState === 'fault'
                 const redLampOn = row.visualState === 'fault'
                 const channelKey = row.channel?.channelKey ?? `QL6C${row.channelIndex}`
                 const signalId = row.channel?.signalId ?? row.signalId ?? ''

@@ -121,6 +121,16 @@
   line-height: 1;
 }
 
+.boardHeadBadgeYellow {
+  border-color: #b08706;
+  color: #ffd400;
+}
+
+.boardHeadBadgeRed {
+  border-color: #8f1515;
+  color: #ff8f8f;
+}
+
 .channelList {
   list-style: none;
   margin: 0;

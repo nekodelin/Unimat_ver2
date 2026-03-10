@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import nodeBackgroundSvg from '../../assets/node-window/background.svg'
 import { NODE_WINDOW_ELEMENTS, NODE_WINDOW_ELEMENTS_BY_ZONE_ID } from '../../data/nodeWindowElements'
 import { NODE_WINDOW_HOTSPOTS, NODE_WINDOW_PHOTO_FRAME } from '../../data/nodeWindowHotspots'
+import { normalizeLedState, type LedViewState } from '../../features/unimat/lib/normalizeLedState'
 import type { ChannelState } from '../../types/channel'
 import type { ModuleFaultInfo } from '../../types/module'
 import type { ZoneStatus } from '../../types/status'
@@ -33,12 +34,28 @@ function resolveCardTitle(status: ZoneStatus): string {
   return status === 'fault' ? 'Неисправность' : 'Состояние узла'
 }
 
-function resolveNodeLedState(status: ZoneStatus): NodeLedState {
-  if (status === 'fault') {
+function resolveChannelLedViewState(channel: ChannelState | undefined, channelLabel: string): LedViewState {
+  return normalizeLedState({
+    hasData: channel !== undefined && channel.backendStatus !== 'unknown',
+    isFault:
+      channel !== undefined &&
+      (channel.isFault ||
+        channel.status === 'fault' ||
+        channel.backendStatus === 'open_circuit' ||
+        channel.backendStatus === 'short_circuit'),
+    faultText: channel?.faultText,
+    channelLabel,
+  })
+}
+
+function resolveNodeLedState(channel: ChannelState | undefined, channelLabel: string): NodeLedState {
+  const ledState = resolveChannelLedViewState(channel, channelLabel)
+
+  if (ledState.red) {
     return 'yellow-red'
   }
 
-  if (status === 'normal') {
+  if (ledState.yellow) {
     return 'yellow'
   }
 
@@ -87,8 +104,8 @@ export function NodeDetailModal({
   const activeElement = NODE_WINDOW_ELEMENTS_BY_ZONE_ID.get(selectedZoneId) ?? NODE_WINDOW_ELEMENTS[0]
   const activeZoneId = activeElement.zoneId
   const activeChannel = channelByZoneId.get(activeZoneId)
-  const activeZoneState = zoneStateMap.get(activeZoneId)
-  const activeStatus = activeChannel?.status ?? activeZoneState?.status ?? 'inactive'
+  const activeLedState = resolveChannelLedViewState(activeChannel, activeElement.channel)
+  const activeStatus: ZoneStatus = activeLedState.red ? 'fault' : activeLedState.yellow ? 'normal' : 'inactive'
 
   const runtimeInfo = moduleInfoByZone[activeZoneId]
   const fallbackInfo = activeElement.info
@@ -162,17 +179,16 @@ export function NodeDetailModal({
           <div className={styles.boardPanelWrap}>
             <aside className={styles.boardPanel}>
               <div className={styles.boardHeader}>
-                <span className={styles.boardHeadBadge}>1</span>
-                <span className={styles.boardHeadBadge}>0</span>
+                <span className={`${styles.boardHeadBadge} ${styles.boardHeadBadgeYellow}`}>1</span>
+                <span className={`${styles.boardHeadBadge} ${styles.boardHeadBadgeRed}`}>0</span>
               </div>
 
               <ul className={styles.channelList}>
                 {NODE_WINDOW_ELEMENTS.map((element) => {
                   const channel = channelByZoneId.get(element.zoneId)
-                  const zoneStatus = channel?.status ?? zoneStateMap.get(element.zoneId)?.status ?? 'inactive'
                   const selected = element.zoneId === activeZoneId
                   const hovered = element.zoneId === hoveredZoneId
-                  const ledState = resolveNodeLedState(zoneStatus)
+                  const ledState = resolveNodeLedState(channel, element.channel)
 
                   return (
                     <li key={element.id}>

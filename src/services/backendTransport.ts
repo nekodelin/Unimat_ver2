@@ -16,8 +16,17 @@ function hasStateData(value: unknown): boolean {
     return false
   }
 
+  const raw = isRecord(value.raw) ? value.raw : null
+  const hasRawState =
+    raw !== null &&
+    (typeof raw.in === 'number' ||
+      typeof raw.inversed === 'number' ||
+      typeof raw.out === 'number' ||
+      typeof raw.other === 'number')
+
   return Boolean(
-    value.channels ||
+    hasRawState ||
+      value.channels ||
       value.decodedChannels ||
       value.zones ||
       value.modules ||

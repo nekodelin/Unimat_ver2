@@ -65,6 +65,10 @@ const SIGNAL_ALIASES: Record<string, string> = {
   '1s202a': '1s202b',
 }
 
+const RAW_DECODER_TOPIC = '__raw_decoder__'
+const RAW_CHANNEL_MODULE_KEY = 'QL6C'
+const RAW_CHANNEL_COUNT = 8
+
 const SIGNAL_BY_INTERNAL_ID = new Map(TECHNICAL_SIGNAL_DEFS.map((signal) => [signal.id, signal]))
 const INTERNAL_ID_BY_SIGNAL_ID = new Map(
   TECHNICAL_SIGNAL_DEFS.map((signal) => [normalizeSignalId(signal.signalId), signal.id]),
@@ -140,6 +144,147 @@ function toCollection<T>(value: unknown): T[] {
   }
 
   return []
+}
+
+function toMask(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return (Math.trunc(value) >>> 0) & 0xff
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim()
+    if (!normalized) {
+      return null
+    }
+
+    const parsed = Number(normalized)
+    if (Number.isFinite(parsed)) {
+      return (Math.trunc(parsed) >>> 0) & 0xff
+    }
+  }
+
+  return null
+}
+
+interface RawMasks {
+  inMask: number | null
+  inversedMask: number | null
+  outMask: number | null
+  otherMask: number | null
+}
+
+function extractRawMasks(payload: BackendStatePayload): RawMasks | null {
+  const nestedPayload = asRecord((payload as UnknownRecord).payload)
+  const nestedState = asRecord((payload as UnknownRecord).state)
+  const candidates = [payload.raw, nestedPayload.raw, nestedState.raw]
+
+  for (const candidate of candidates) {
+    if (!isRecord(candidate)) {
+      continue
+    }
+
+    const inMask = toMask(candidate.in)
+    const inversedMask = toMask(candidate.inversed)
+    const outMask = toMask(candidate.out)
+    const otherMask = toMask(candidate.other)
+
+    if (inMask === null && inversedMask === null && outMask === null && otherMask === null) {
+      continue
+    }
+
+    return {
+      inMask,
+      inversedMask,
+      outMask,
+      otherMask,
+    }
+  }
+
+  return null
+}
+
+function getMaskBit(mask: number, bitIndex: number): 0 | 1 {
+  return ((mask >>> bitIndex) & 1) as 0 | 1
+}
+
+function resolveRawChannelStatus(
+  inputBit: 0 | 1,
+  inversedBit: 0 | 1,
+): {
+  status: ChannelBackendStatus
+  isFault: boolean
+  severity: string
+  stateLabel?: string
+} {
+  if (inputBit === 0 && inversedBit === 1) {
+    return {
+      status: 'normal',
+      isFault: false,
+      severity: 'info',
+    }
+  }
+
+  if (inputBit === 1 && inversedBit === 0) {
+    return {
+      status: 'short_circuit',
+      isFault: true,
+      severity: 'error',
+    }
+  }
+
+  if (inputBit === 0 && inversedBit === 0) {
+    return {
+      status: 'open_circuit',
+      isFault: false,
+      severity: 'warning',
+    }
+  }
+
+  return {
+    status: 'unknown',
+    isFault: false,
+    severity: 'warning',
+    stateLabel: 'Error',
+  }
+}
+
+function buildChannelsFromRaw(payload: BackendStatePayload): BackendChannel[] {
+  const rawMasks = extractRawMasks(payload)
+  if (!rawMasks || rawMasks.inMask === null || rawMasks.inversedMask === null) {
+    return []
+  }
+
+  const channels: BackendChannel[] = []
+
+  for (let channelIndex = 0; channelIndex < RAW_CHANNEL_COUNT; channelIndex += 1) {
+    const channelKey = channelIndex.toString(16).toUpperCase()
+    const inputBit = getMaskBit(rawMasks.inMask, channelIndex)
+    const inversedBit = getMaskBit(rawMasks.inversedMask, channelIndex)
+    const outputBit =
+      rawMasks.outMask === null ? undefined : getMaskBit(rawMasks.outMask, RAW_CHANNEL_COUNT - 1 - channelIndex)
+    const decoded = resolveRawChannelStatus(inputBit, inversedBit)
+    const binding = getChannelBindingByModuleAndIndex(RAW_CHANNEL_MODULE_KEY, channelKey)
+
+    channels.push({
+      channel: channelKey,
+      channelIndex: channelKey,
+      channelKey: `${RAW_CHANNEL_MODULE_KEY}${channelKey}`,
+      moduleKey: RAW_CHANNEL_MODULE_KEY,
+      signalId: binding?.signalId ?? undefined,
+      techNumber: channelKey,
+      status: decoded.status,
+      stateLabel: decoded.stateLabel,
+      severity: decoded.severity,
+      isFault: decoded.isFault,
+      isActive: decoded.status === 'normal',
+      input: inputBit,
+      output: outputBit,
+      diagnostic: rawMasks.otherMask ?? undefined,
+      topic: RAW_DECODER_TOPIC,
+    })
+  }
+
+  return channels
 }
 
 function normalizeSignalId(rawSignalId: string): string {
@@ -437,15 +582,21 @@ function collectBackendChannels(payload: BackendStatePayload): BackendChannel[] 
     .map((candidate) => toCollection<BackendChannel>(candidate))
     .find((candidate) => candidate.length > 0)
 
-  if (decodedChannels && decodedChannels.length > 0) {
-    return decodedChannels
-  }
-
-  return (
+  const baseChannels =
+    decodedChannels && decodedChannels.length > 0
+      ? decodedChannels
+      : (
     legacyCandidates
       .map((candidate) => toCollection<BackendChannel>(candidate))
       .find((candidate) => candidate.length > 0) ?? []
-  )
+      )
+
+  const rawChannels = buildChannelsFromRaw(payload)
+  if (rawChannels.length === 0) {
+    return baseChannels
+  }
+
+  return [...baseChannels, ...rawChannels]
 }
 
 function createFallbackChannelFromElement(
@@ -516,8 +667,7 @@ function normalizeDecodedChannels(
   backendChannels.forEach((channelRaw) => {
     const identity = resolveChannelIdentity(channelRaw)
     const backendStatus = resolveBackendStatus(channelRaw.status)
-    const isFaultByStatus =
-      backendStatus === 'open_circuit' || backendStatus === 'short_circuit'
+    const isFaultByStatus = backendStatus === 'short_circuit'
     const isFaultByPayload = asBoolean(channelRaw.isFault)
     const severity = normalizeKey(asString(channelRaw.severity))
     const isFault =
@@ -528,17 +678,22 @@ function normalizeDecodedChannels(
 
     const uiStatus = resolveUiStatus(backendStatus, isFault)
     const isActiveFromPayload = asBoolean(channelRaw.isActive)
-    const isActive = isActiveFromPayload ?? (uiStatus === 'normal')
+    const isActive = isActiveFromPayload ?? (backendStatus === 'normal')
     const rowColor = isFault ? 'red' : uiStatus === 'inactive' ? 'muted' : 'normal'
     const ledColor = isFault ? 'red' : uiStatus === 'inactive' ? 'dim' : 'yellow'
     const message = asString(channelRaw.message)
     const cause = asString(channelRaw.cause)
     const reason = asString(channelRaw.reason, cause)
     const action = asString(channelRaw.action)
-    const stateLabel = resolveStateLabel(backendStatus, asString(channelRaw.stateLabel))
+    const rawStateLabel = asString(channelRaw.stateLabel)
+    const stateLabel = resolveStateLabel(backendStatus, rawStateLabel)
     const title = asString(channelRaw.title, identity.titleFallback)
     const event = asString(channelRaw.event, title)
-    const faultText = isFault ? message || reason || stateLabel : ''
+    const showFaultText =
+      isFault ||
+      backendStatus === 'open_circuit' ||
+      (backendStatus === 'unknown' && rawStateLabel.trim().length > 0)
+    const faultText = showFaultText ? message || reason || stateLabel : ''
     const channelUpdatedAt = toIsoTimestamp(channelRaw.updatedAt || channelRaw.timestamp || updatedAt)
 
     const info = createNeutralInfo({
@@ -592,6 +747,18 @@ function normalizeDecodedChannels(
     const current = byId.get(identity.id)
     if (!current) {
       byId.set(identity.id, normalized)
+      return
+    }
+
+    const currentIsRaw = current.topic === RAW_DECODER_TOPIC
+    const candidateIsRaw = normalized.topic === RAW_DECODER_TOPIC
+
+    if (candidateIsRaw && !currentIsRaw) {
+      byId.set(identity.id, normalized)
+      return
+    }
+
+    if (currentIsRaw && !candidateIsRaw) {
       return
     }
 
