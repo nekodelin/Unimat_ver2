@@ -429,7 +429,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
   }
 
   return (
-    <div className={styles.host}>
+    <div className={`${styles.host} ${isExpanded ? styles.hostExpanded : ''}`}>
       {!isExpanded ? (
         <button
           type="button"
@@ -439,7 +439,11 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
           }}
           aria-label="Открыть журнал событий"
         >
-          <img src={journalDockUrl} alt="" aria-hidden="true" />
+          <img className={styles.dockTriggerAsset} src={journalDockUrl} alt="" aria-hidden="true" />
+          <span className={styles.dockTriggerIcon} aria-hidden="true">
+            {'>'}
+          </span>
+          <span className={styles.dockTriggerLabel}>Журнал</span>
         </button>
       ) : null}
 
@@ -452,11 +456,14 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
             aria-label="Свернуть журнал"
           />
 
-          <aside className={styles.panel} role="dialog" aria-modal="true" aria-label="Журнал событий">
+          <aside className={styles.panel} aria-label="Журнал событий">
             <header className={styles.header}>
               <div className={styles.logoWrap}>
                 <span className={styles.logoBadge}>LOG</span>
-                <span className={styles.logoTitle}>ЖУРНАЛ СОБЫТИЙ</span>
+                <div className={styles.logoText}>
+                  <span className={styles.logoTitle}>ЖУРНАЛ СОБЫТИЙ</span>
+                  <span className={styles.logoCaption}>Технический мониторинг</span>
+                </div>
               </div>
 
               <button
@@ -465,7 +472,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
                 onClick={handleClose}
                 aria-label="Свернуть журнал"
               >
-                <span aria-hidden="true">‹</span>
+                <span aria-hidden="true">{'<'}</span>
               </button>
             </header>
 
@@ -476,44 +483,54 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
                 </div>
               ) : (
                 <form className={styles.authScreen} onSubmit={(event) => void handleLoginSubmit(event)}>
-                  <label className={styles.field}>
-                    <span>Логин</span>
-                    <input
-                      type="text"
-                      autoComplete="username"
-                      value={state.login}
-                      onChange={(event) =>
-                        dispatch({
-                          type: 'SET_LOGIN',
-                          value: event.currentTarget.value,
-                        })
-                      }
-                      placeholder="Введите логин"
-                    />
-                  </label>
+                  <div className={styles.authCard}>
+                    <div className={styles.authCardHeader}>
+                      <span className={styles.authCardIcon}>LOG</span>
+                      <div className={styles.authCardText}>
+                        <h2 className={styles.authTitle}>Вход в журнал</h2>
+                        <p className={styles.authSubtitle}>Авторизация оператора</p>
+                      </div>
+                    </div>
 
-                  <label className={styles.field}>
-                    <span>Пароль</span>
-                    <input
-                      type="password"
-                      autoComplete="current-password"
-                      value={state.password}
-                      onChange={(event) =>
-                        dispatch({
-                          type: 'SET_PASSWORD',
-                          value: event.currentTarget.value,
-                        })
-                      }
-                      placeholder="Введите пароль"
-                    />
-                  </label>
+                    <label className={styles.field}>
+                      <span>Логин</span>
+                      <input
+                        type="text"
+                        autoComplete="username"
+                        value={state.login}
+                        onChange={(event) =>
+                          dispatch({
+                            type: 'SET_LOGIN',
+                            value: event.currentTarget.value,
+                          })
+                        }
+                        placeholder="Введите логин"
+                      />
+                    </label>
 
-                  <div className={styles.authHint}>Для первой версии: admin / admin</div>
+                    <label className={styles.field}>
+                      <span>Пароль</span>
+                      <input
+                        type="password"
+                        autoComplete="current-password"
+                        value={state.password}
+                        onChange={(event) =>
+                          dispatch({
+                            type: 'SET_PASSWORD',
+                            value: event.currentTarget.value,
+                          })
+                        }
+                        placeholder="Введите пароль"
+                      />
+                    </label>
 
-                  <div className={styles.authActions}>
-                    <button type="submit" className={styles.primaryButton} disabled={isAuthSubmitting}>
-                      {isAuthSubmitting ? 'Вход...' : 'Войти'}
-                    </button>
+                    <div className={styles.authHint}>Для первой версии: admin / admin</div>
+
+                    <div className={styles.authActions}>
+                      <button type="submit" className={styles.primaryButton} disabled={isAuthSubmitting}>
+                        {isAuthSubmitting ? 'Вход...' : 'Войти'}
+                      </button>
+                    </div>
                   </div>
 
                   {error ? <p className={styles.errorText}>{error}</p> : null}

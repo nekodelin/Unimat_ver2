@@ -1,8 +1,8 @@
-﻿.wrap {
+.wrap {
   width: 100%;
   min-width: 0;
   overflow-x: hidden;
-  padding-left: clamp(3.3rem, 6.4vw, 6.3rem);
+  padding-left: clamp(0.45rem, 1vw, 0.8rem);
 }
 
 .panel {

@@ -21,12 +21,14 @@ export function TechnicalPage({
   return (
     <section className={styles.page}>
       <div className={styles.content}>
-        <TechnicalPanel
-          decodedChannels={decodedChannels}
-          alarmMachine={alarmMachine}
-          onAlarmSoundToggle={onAlarmSoundToggle}
-        />
         <TechnicalJournalFlow entries={journalEntries} />
+        <div className={styles.mainArea}>
+          <TechnicalPanel
+            decodedChannels={decodedChannels}
+            alarmMachine={alarmMachine}
+            onAlarmSoundToggle={onAlarmSoundToggle}
+          />
+        </div>
       </div>
     </section>
   )
