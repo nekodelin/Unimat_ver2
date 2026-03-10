@@ -101,6 +101,8 @@ function buildChannels(scenario: ScenarioSpec, timestamp: string): ChannelState[
     const definition = signalByInternalId.get(element.signalId)
     const moduleInfo = getModuleFaultInfo(element.zoneId)
     const isFault = status === 'fault'
+    const yellowLed = status === 'normal' || status === 'fault'
+    const redLed = status === 'fault'
     const faultText = isFault ? SIGNAL_FAULT_CATALOG[element.signalId] ?? moduleInfo.fault : ''
     const backendStatus =
       status === 'fault'
@@ -147,8 +149,10 @@ function buildChannels(scenario: ScenarioSpec, timestamp: string): ChannelState[
       diagnostic: '-',
       isFault,
       isActive: status === 'normal',
-      ledColor: isFault ? 'red' : status === 'inactive' ? 'dim' : 'yellow',
-      rowColor: isFault ? 'red' : status === 'inactive' ? 'muted' : 'normal',
+      yellowLed,
+      redLed,
+      ledColor: redLed ? 'red' : yellowLed ? 'yellow' : 'dim',
+      rowColor: redLed ? 'red' : yellowLed ? 'normal' : 'muted',
     }
   })
 }

@@ -34,6 +34,8 @@ export interface ChannelState {
   diagnostic: string
   isFault: boolean
   isActive: boolean
+  yellowLed: boolean
+  redLed: boolean
   ledColor: LedColor
   rowColor: RowColor
 }

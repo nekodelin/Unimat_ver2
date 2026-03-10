@@ -1,7 +1,6 @@
 import type { ChannelState } from '../../../types/channel'
 import type { DecodedChannelStatus, UnimatModuleRowState, UnimatTechRowConfig } from '../../../types/unimat'
 import { getChannelFaultText } from './getChannelFaultText'
-import { normalizeLedState } from './normalizeLedState'
 
 const SIGNAL_ALIAS_CANONICAL: Record<string, string> = {
   '1s202a': '1s202b',
@@ -43,14 +42,14 @@ function resolveRowChannel(
   moduleChannels: ChannelState[],
   row: UnimatTechRowConfig,
 ): ChannelState | null {
-  if (!row.signalId) {
-    return null
-  }
-
   const byChannelIndex =
     moduleChannels.find((channel) => channel.channelIndex.toUpperCase() === row.channelIndex.toUpperCase()) ?? null
   if (byChannelIndex) {
     return byChannelIndex
+  }
+
+  if (!row.signalId) {
+    return null
   }
 
   const normalizedRowSignalId = normalizeSignalId(row.signalId)
@@ -74,21 +73,14 @@ export function getModuleRowsState(
   return rowsConfig.map((row) => {
     const channel = resolveRowChannel(moduleChannels, row)
     const decodedStatus = resolveDecodedStatus(channel)
-    const hasData = decodedStatus !== 'no_data' && decodedStatus !== 'unknown'
-    const isFault =
-      channel !== null &&
-      (channel.isFault === true || decodedStatus === 'open_circuit' || decodedStatus === 'short_circuit')
-    const ledState = normalizeLedState({
-      hasData,
-      isFault,
-      faultText: isFault ? getChannelFaultText(channel) : '',
-      channelLabel: row.channelIndex,
-    })
-    const visualState: UnimatModuleRowState['visualState'] = ledState.red
+    const yellowLed = channel?.yellowLed ?? false
+    const redLed = channel?.redLed ?? false
+    const visualState: UnimatModuleRowState['visualState'] = redLed
       ? 'fault'
-      : ledState.yellow
+      : yellowLed
         ? 'normal'
         : 'inactive'
+    const faultText = redLed && channel ? getChannelFaultText(channel) : ''
 
     return {
       id: row.id,
@@ -99,7 +91,7 @@ export function getModuleRowsState(
       title: row.title,
       visualState,
       decodedStatus,
-      faultText: ledState.faultText,
+      faultText,
       channel,
     }
   })

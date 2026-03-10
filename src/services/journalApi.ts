@@ -259,7 +259,18 @@ function normalizeJournalEntry(record: UnknownRecord, index: number): JournalEnt
   const description =
     pickString(record, ['description', 'message', 'text', 'details', 'comment', 'reason']) ||
     'Без описания'
-  const channel = pickString(record, ['channel', 'channel_key', 'channelKey', 'signal_id', 'signalId']) || '-'
+  const channel =
+    pickString(record, [
+      'channel',
+      'channel_index',
+      'channelIndex',
+      'channel_key',
+      'channelKey',
+      'tech_number',
+      'techNumber',
+      'signal_id',
+      'signalId',
+    ]) || '-'
   const signalId = pickString(record, ['signal_id', 'signalId'])
   const reason = pickString(record, ['reason'])
   const action = pickString(record, ['action'])
@@ -312,7 +323,7 @@ function parseFileNameFromDisposition(contentDisposition: string | null): string
     }
   }
 
-  const asciiMatch = contentDisposition.match(/filename="?([^\";]+)"?/i)
+  const asciiMatch = contentDisposition.match(/filename="?([^";]+)"?/i)
   if (asciiMatch?.[1]) {
     return asciiMatch[1].trim()
   }

@@ -1,10 +1,10 @@
 import type { UnimatTechRowConfig } from '../../../types/unimat'
 
 export const UNIMAT_TECH_ROWS_QL6C: UnimatTechRowConfig[] = [
-  { id: 'ql6c-0', moduleKey: 'QL6C', channelIndex: '0', signalId: '1s201a', title: 'Подъем ПРУ слева' },
-  { id: 'ql6c-1', moduleKey: 'QL6C', channelIndex: '1', signalId: '1s201b', title: 'Опускание ПРУ слева' },
-  { id: 'ql6c-2', moduleKey: 'QL6C', channelIndex: '2', signalId: '1s202b', title: 'Подъем ПРУ справа' },
-  { id: 'ql6c-3', moduleKey: 'QL6C', channelIndex: '3', signalId: 's1202b', title: 'Опускание ПРУ справа' },
+  { id: 'ql6c-0', moduleKey: 'QL6C', channelIndex: '0', signalId: null, title: '' },
+  { id: 'ql6c-1', moduleKey: 'QL6C', channelIndex: '1', signalId: null, title: '' },
+  { id: 'ql6c-2', moduleKey: 'QL6C', channelIndex: '2', signalId: null, title: '' },
+  { id: 'ql6c-3', moduleKey: 'QL6C', channelIndex: '3', signalId: null, title: '' },
   { id: 'ql6c-4', moduleKey: 'QL6C', channelIndex: '4', signalId: null, title: '' },
   { id: 'ql6c-5', moduleKey: 'QL6C', channelIndex: '5', signalId: null, title: '' },
   { id: 'ql6c-6', moduleKey: 'QL6C', channelIndex: '6', signalId: '1s212b', title: 'Крюк слева выдвинуть' },

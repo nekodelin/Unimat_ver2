@@ -26,6 +26,10 @@ export interface BackendChannel {
   isFault?: boolean
   ledColor?: string
   rowColor?: string
+  yellow_led?: boolean | string | number
+  red_led?: boolean | string | number
+  yellowLed?: boolean | string | number
+  redLed?: boolean | string | number
   isActive?: boolean
   event?: string
   timestamp?: string
@@ -59,6 +63,8 @@ export interface BackendJournalEvent {
   updatedAt?: string
   signalId?: string
   channel?: string
+  channelIndex?: string | number
+  channelKey?: string
   title?: string
   message?: string
   reason?: string

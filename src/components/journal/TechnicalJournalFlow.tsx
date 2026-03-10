@@ -1,5 +1,10 @@
 import { type FormEvent, useEffect, useReducer, useRef, useState } from 'react'
 import journalBrandUrl from '../../assets/journal/journal-brand-log-lock.svg'
+import {
+  getChannelBindingByChannelKey,
+  getChannelBindingBySignalId,
+  normalizeChannelIndex,
+} from '../../data/channelMapping'
 import { ApiRequestError } from '../../services/apiClient'
 import {
   exportJournalToTxt,
@@ -45,6 +50,37 @@ function formatDateTime(timestamp: string): string {
     minute: '2-digit',
     second: '2-digit',
   })
+}
+
+function formatChannelLabel(channelValue: string): string {
+  const normalized = channelValue.trim()
+  if (!normalized) {
+    return '-'
+  }
+
+  const directIndex = normalizeChannelIndex(normalized)
+  if (directIndex) {
+    return directIndex
+  }
+
+  if (/^\d+$/.test(normalized)) {
+    const decimalValue = Number.parseInt(normalized, 10)
+    if (Number.isInteger(decimalValue) && decimalValue >= 0 && decimalValue <= 15) {
+      return decimalValue.toString(16).toUpperCase()
+    }
+  }
+
+  const byChannelKey = getChannelBindingByChannelKey(normalized)
+  if (byChannelKey) {
+    return byChannelKey.channelIndex
+  }
+
+  const bySignalId = getChannelBindingBySignalId(normalized)
+  if (bySignalId) {
+    return bySignalId.channelIndex
+  }
+
+  return '-'
 }
 
 function formatNowForFileName(date: Date): string {
@@ -625,7 +661,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
 
                 <div className={styles.tableHead}>
                   <span>Дата и время</span>
-                  <span>Элемент</span>
+                  <span>Канал</span>
                   <span>Новое состояние</span>
                   <span>Описание</span>
                 </div>
@@ -651,7 +687,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
                         >
                           <span className={styles.eventCell}>{formatDateTime(entry.timestamp)}</span>
                           <span className={`${styles.eventCell} ${styles.eventCellElement}`}>
-                            {entry.element || entry.channel || '-'}
+                            {formatChannelLabel(entry.channel)}
                           </span>
                           <span className={styles.eventCell}>{entry.newState || '-'}</span>
                           <span className={`${styles.eventCell} ${styles.eventCellDescription}`}>

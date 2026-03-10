@@ -109,6 +109,16 @@ function asBoolean(value: unknown): boolean | undefined {
     return value
   }
 
+  if (typeof value === 'number') {
+    if (value === 1) {
+      return true
+    }
+
+    if (value === 0) {
+      return false
+    }
+  }
+
   if (typeof value === 'string') {
     const normalized = normalizeKey(value)
     if (normalized === 'true' || normalized === '1' || normalized === 'yes') {
@@ -121,6 +131,28 @@ function asBoolean(value: unknown): boolean | undefined {
   }
 
   return undefined
+}
+
+function pickBoolean(record: UnknownRecord, keys: string[]): boolean | undefined {
+  for (const key of keys) {
+    const parsed = asBoolean(record[key])
+    if (parsed !== undefined) {
+      return parsed
+    }
+  }
+
+  return undefined
+}
+
+function resolveLedState(channel: BackendChannel): { yellowLed: boolean; redLed: boolean } {
+  const channelRecord = asRecord(channel)
+  const yellowLed = pickBoolean(channelRecord, ['yellow_led', 'yellowLed']) ?? false
+  const redLed = pickBoolean(channelRecord, ['red_led', 'redLed']) ?? false
+
+  return {
+    yellowLed,
+    redLed,
+  }
 }
 
 function toIsoTimestamp(value: unknown): string {
@@ -651,6 +683,8 @@ function createFallbackChannelFromElement(
     diagnostic: '-',
     isFault: false,
     isActive: false,
+    yellowLed: false,
+    redLed: false,
     ledColor: 'dim',
     rowColor: 'muted',
   }
@@ -679,8 +713,9 @@ function normalizeDecodedChannels(
     const uiStatus = resolveUiStatus(backendStatus, isFault)
     const isActiveFromPayload = asBoolean(channelRaw.isActive)
     const isActive = isActiveFromPayload ?? (backendStatus === 'normal')
-    const rowColor = isFault ? 'red' : uiStatus === 'inactive' ? 'muted' : 'normal'
-    const ledColor = isFault ? 'red' : uiStatus === 'inactive' ? 'dim' : 'yellow'
+    const { yellowLed, redLed } = resolveLedState(channelRaw)
+    const rowColor = redLed ? 'red' : yellowLed ? 'normal' : 'muted'
+    const ledColor = redLed ? 'red' : yellowLed ? 'yellow' : 'dim'
     const message = asString(channelRaw.message)
     const cause = asString(channelRaw.cause)
     const reason = asString(channelRaw.reason, cause)
@@ -740,6 +775,8 @@ function normalizeDecodedChannels(
       diagnostic: asString(channelRaw.diagnostic, '-'),
       isFault,
       isActive,
+      yellowLed,
+      redLed,
       ledColor,
       rowColor,
     }
@@ -1015,7 +1052,7 @@ function buildJournalEntries(
           timestamp,
           level: normalizeLevel(record.severity),
           source: asString(record.source, 'Система'),
-          channel: asString(record.channel || record.signalId, '-'),
+          channel: asString(record.channel || record.channelIndex || record.channelKey || record.signalId, '-'),
           title: asString(record.title, 'Событие'),
           message,
           signalId: asString(record.signalId),
@@ -1198,4 +1235,3 @@ export function mapBackendStateToUiState(input: unknown, options: AdapterOptions
 }
 
 export const adaptBackendStateToSnapshot = mapBackendStateToUiState
-

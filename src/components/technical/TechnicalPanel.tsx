@@ -99,8 +99,8 @@ export function TechnicalPanel({
               {rows.map((row) => {
                 const isFault = row.visualState === 'fault'
                 const isMuted = row.visualState === 'inactive'
-                const yellowLampOn = row.visualState === 'normal' || row.visualState === 'fault'
-                const redLampOn = row.visualState === 'fault'
+                const yellowLampOn = row.channel?.yellowLed ?? false
+                const redLampOn = row.channel?.redLed ?? false
                 const channelKey = row.channel?.channelKey ?? `QL6C${row.channelIndex}`
                 const signalId = row.channel?.signalId ?? row.signalId ?? ''
                 const titleChunks = [channelKey, signalId, row.title].filter((chunk) => chunk.length > 0)
