@@ -226,7 +226,7 @@
 .toolbarTop {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto) auto auto;
   gap: clamp(0.3rem, 0.8vw, 0.55rem);
   align-items: center;
 }
@@ -259,6 +259,39 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.realtimeStatus {
+  min-width: 0;
+  border-radius: 0.7rem;
+  background: #d5d5d5;
+  color: #181a1f;
+  min-height: clamp(2.2rem, 3.8vh, 2.8rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 clamp(0.55rem, 1.2vw, 0.9rem);
+  font-size: clamp(0.74rem, 1.05vw, 0.9rem);
+  white-space: nowrap;
+}
+
+.realtimeDot {
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.realtimeConnected {
+  background: #21a65a;
+}
+
+.realtimeConnecting {
+  background: #b08b12;
+}
+
+.realtimeDisconnected {
+  background: #8f2a2a;
 }
 
 .filterRow {
@@ -379,7 +412,8 @@
   }
 
   .toolbarMode,
-  .toolbarPeriod {
+  .toolbarPeriod,
+  .realtimeStatus {
     grid-column: 1 / -1;
   }
 

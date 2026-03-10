@@ -1,4 +1,4 @@
-import { type FormEvent, useReducer, useState } from 'react'
+import { type FormEvent, useEffect, useReducer, useRef, useState } from 'react'
 import journalDockUrl from '../../assets/raw/Техническая вкладка/1 сост.svg'
 import { ApiRequestError } from '../../services/apiClient'
 import {
@@ -14,6 +14,10 @@ import {
   getJournalAuthToken,
   setJournalAuthToken,
 } from '../../services/journalAuthStorage'
+import {
+  JournalRealtimeClient,
+  type JournalRealtimeStatus,
+} from '../../services/journalRealtime'
 import type { JournalEntry } from '../../types/journal'
 import {
   createInitialTechnicalJournalState,
@@ -77,6 +81,47 @@ function isDateRangeValid(dateFrom: string, dateTo: string): boolean {
   return dateFrom <= dateTo
 }
 
+function parseDateBoundary(dateValue: string, endOfDay: boolean): number | null {
+  if (!dateValue) {
+    return null
+  }
+
+  const normalizedValue = `${dateValue}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}`
+  const timestamp = Date.parse(normalizedValue)
+  return Number.isNaN(timestamp) ? null : timestamp
+}
+
+function isEntryInFilterRange(entry: JournalEntry, dateFrom: string, dateTo: string): boolean {
+  const entryTimestamp = Date.parse(entry.timestamp)
+  if (Number.isNaN(entryTimestamp)) {
+    return false
+  }
+
+  const fromBoundary = parseDateBoundary(dateFrom, false)
+  if (fromBoundary !== null && entryTimestamp < fromBoundary) {
+    return false
+  }
+
+  const toBoundary = parseDateBoundary(dateTo, true)
+  if (toBoundary !== null && entryTimestamp > toBoundary) {
+    return false
+  }
+
+  return true
+}
+
+function realtimeStatusLabel(status: JournalRealtimeStatus): string {
+  if (status === 'connected') {
+    return 'Realtime подключен'
+  }
+
+  if (status === 'connecting') {
+    return 'Realtime подключение...'
+  }
+
+  return 'Realtime отключен'
+}
+
 function downloadBlob(blob: Blob, fileName: string): void {
   const objectUrl = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -104,10 +149,69 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
   const [isExporting, setIsExporting] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<{ dateFrom: string; dateTo: string }>({
+    dateFrom: '',
+    dateTo: '',
+  })
+  const [realtimeStatus, setRealtimeStatus] = useState<JournalRealtimeStatus>('disconnected')
+
+  const realtimeClientRef = useRef<JournalRealtimeClient | null>(null)
+  const activeFilterRef = useRef(activeFilter)
 
   const isExpanded = state.screen !== TechnicalJournalScreens.Collapsed
 
+  useEffect(() => {
+    activeFilterRef.current = activeFilter
+  }, [activeFilter])
+
+  useEffect(() => {
+    return () => {
+      realtimeClientRef.current?.disconnect()
+      realtimeClientRef.current = null
+    }
+  }, [])
+
+  const stopRealtime = (): void => {
+    realtimeClientRef.current?.disconnect()
+    realtimeClientRef.current = null
+    setRealtimeStatus('disconnected')
+  }
+
+  const handleRealtimeAppend = (entry: JournalEntry): void => {
+    const currentFilter = activeFilterRef.current
+    if (!isEntryInFilterRange(entry, currentFilter.dateFrom, currentFilter.dateTo)) {
+      return
+    }
+
+    setJournalEntries((currentEntries) => {
+      if (currentEntries.some((existing) => existing.id === entry.id)) {
+        return currentEntries
+      }
+
+      return [entry, ...currentEntries].sort(
+        (left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp),
+      )
+    })
+  }
+
+  const startRealtime = (token: string): void => {
+    stopRealtime()
+
+    if (!token.trim()) {
+      return
+    }
+
+    const client = new JournalRealtimeClient()
+    realtimeClientRef.current = client
+    client.connect({
+      token,
+      onAppend: handleRealtimeAppend,
+      onStatusChange: setRealtimeStatus,
+    })
+  }
+
   const handleUnauthorized = (message = 'Сессия завершена. Войдите снова.'): void => {
+    stopRealtime()
     clearJournalAuthToken()
     setCurrentUser(null)
     setJournalEntries([])
@@ -120,12 +224,17 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
     dispatch({ type: 'SHOW_AUTH' })
   }
 
-  const loadJournal = async (dateFrom?: string, dateTo?: string): Promise<void> => {
+  const loadJournal = async (dateFrom?: string, dateTo?: string): Promise<boolean> => {
     const token = getJournalAuthToken()
+    const normalizedFilter = {
+      dateFrom: dateFrom ?? '',
+      dateTo: dateTo ?? '',
+    }
+    setActiveFilter(normalizedFilter)
 
     if (!token) {
       handleUnauthorized()
-      return
+      return false
     }
 
     setIsLoading(true)
@@ -139,14 +248,16 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
       })
 
       setJournalEntries(loadedEntries)
+      return true
     } catch (requestError) {
       if (isUnauthorizedError(requestError)) {
         handleUnauthorized()
-        return
+        return false
       }
 
       setJournalEntries([])
       setError(`Не удалось загрузить журнал: ${toErrorMessage(requestError)}`)
+      return false
     } finally {
       setIsLoading(false)
     }
@@ -170,7 +281,10 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
       const user = await fetchJournalMe({ token })
       setCurrentUser(user)
       dispatch({ type: 'SHOW_JOURNAL' })
-      await loadJournal(state.dateFrom, state.dateTo)
+      const loaded = await loadJournal(state.dateFrom, state.dateTo)
+      if (loaded) {
+        startRealtime(token)
+      }
     } catch (requestError) {
       if (isUnauthorizedError(requestError)) {
         handleUnauthorized()
@@ -187,6 +301,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
   }
 
   const handleClose = (): void => {
+    stopRealtime()
     dispatch({ type: 'CLOSE' })
     setError(null)
     setIsAuthChecking(false)
@@ -226,7 +341,10 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
 
       setCurrentUser(user)
       dispatch({ type: 'SHOW_JOURNAL' })
-      await loadJournal(state.dateFrom, state.dateTo)
+      const loaded = await loadJournal(state.dateFrom, state.dateTo)
+      if (loaded) {
+        startRealtime(authResult.token)
+      }
     } catch (requestError) {
       if (isUnauthorizedError(requestError)) {
         handleUnauthorized()
@@ -291,6 +409,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
   const handleLogout = async (): Promise<void> => {
     const token = getJournalAuthToken()
     setIsLoggingOut(true)
+    stopRealtime()
 
     try {
       if (token) {
@@ -409,6 +528,19 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
                     <div className={styles.toolbarMode}>Журнал событий</div>
                     <div className={styles.toolbarPeriod}>
                       {currentUser ? `Вы вошли как ${currentUser.displayName}` : 'Пользователь не определен'}
+                    </div>
+                    <div className={styles.realtimeStatus}>
+                      <span
+                        className={`${styles.realtimeDot} ${
+                          realtimeStatus === 'connected'
+                            ? styles.realtimeConnected
+                            : realtimeStatus === 'connecting'
+                              ? styles.realtimeConnecting
+                              : styles.realtimeDisconnected
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <span>{realtimeStatusLabel(realtimeStatus)}</span>
                     </div>
                     <button
                       type="button"

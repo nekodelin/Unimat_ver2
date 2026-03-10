@@ -287,6 +287,17 @@ function normalizeJournalEntry(record: UnknownRecord, index: number): JournalEnt
   }
 }
 
+export function normalizeJournalEntryRecord(
+  payload: unknown,
+  fallbackIndex = 0,
+): JournalEntry | null {
+  if (!isRecord(payload)) {
+    return null
+  }
+
+  return normalizeJournalEntry(payload, fallbackIndex)
+}
+
 function parseFileNameFromDisposition(contentDisposition: string | null): string | null {
   if (!contentDisposition) {
     return null
@@ -357,7 +368,9 @@ export async function fetchJournalEntries(
     },
   })
 
-  const entries = extractCollection(response).map(normalizeJournalEntry)
+  const entries = extractCollection(response)
+    .map((record, index) => normalizeJournalEntryRecord(record, index))
+    .filter((entry): entry is JournalEntry => entry !== null)
 
   return entries.sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp))
 }
