@@ -286,6 +286,7 @@ function buildSnapshot(scenarioId: ScenarioId): DataSnapshot {
     technicalSignals,
     moduleInfoByZone,
     updatedAt: timestamp,
+    connectionDiagnostics: null,
     summary: {
       status: scenarioId === 'all-normal' ? 'normal' : 'warning',
       modulesOnline: 2,

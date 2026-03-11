@@ -80,6 +80,48 @@ export interface BackendSummary {
   faults?: number
 }
 
+export interface BackendConnectionStatusItem {
+  id?: string
+  key?: string
+  code?: string
+  label?: string
+  title?: string
+  name?: string
+  tone?: string
+  color?: string
+  status?: string
+  state?: string
+  severity?: string
+  details?: string
+  description?: string
+  message?: string
+  lastSuccessAt?: string
+  lastSuccessfulExchangeAt?: string
+  updatedAt?: string
+  timestamp?: string
+}
+
+export interface BackendConnectionDiagnostics {
+  problemTitle?: string
+  problem?: string
+  issue?: string
+  recommendedAction?: string
+  action?: string
+  recommendation?: string
+  severity?: string
+  status?: string
+  level?: string
+  connectionStatuses?: BackendConnectionStatusItem[] | Record<string, BackendConnectionStatusItem | string>
+  statuses?: BackendConnectionStatusItem[] | Record<string, BackendConnectionStatusItem | string>
+  indicators?: BackendConnectionStatusItem[] | Record<string, BackendConnectionStatusItem | string>
+  lastUpdatedAt?: string
+  updatedAt?: string
+  lastSuccessfulExchangeAt?: string
+  lastSuccessAt?: string
+  lastUpdatedAgo?: number | string
+  lastSuccessfulExchangeAgo?: number | string
+}
+
 export interface BackendStatePayload {
   updatedAt?: string
   timestamp?: string
@@ -99,6 +141,10 @@ export interface BackendStatePayload {
   warningCount?: number
   normalCount?: number
   summary?: BackendSummary
+  connectionDiagnostics?: BackendConnectionDiagnostics
+  diagnostics?: {
+    connection?: BackendConnectionDiagnostics
+  }
   actions?: {
     tifon?: boolean
   }

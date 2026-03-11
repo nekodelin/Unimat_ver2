@@ -32,6 +32,8 @@ function hasStateData(value: unknown): boolean {
       value.modules ||
       value.journal ||
       value.summary ||
+      value.connectionDiagnostics ||
+      value.diagnostics ||
       value.actions ||
       typeof value.faultCount === 'number' ||
       typeof value.warningCount === 'number' ||

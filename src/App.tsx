@@ -25,6 +25,7 @@ function App() {
   const moduleInfoByZone = useAppStore((state) => state.moduleInfoByZone)
   const technicalSignals = useAppStore((state) => state.technicalSignals)
   const updatedAt = useAppStore((state) => state.updatedAt)
+  const connectionDiagnostics = useAppStore((state) => state.connectionDiagnostics)
   const connectionState = useAppStore((state) => state.connectionState)
   const alarmMachine = useAppStore((state) => state.alarmMachine)
   const moduleOpen = useAppStore((state) => state.moduleOpen)
@@ -80,6 +81,7 @@ function App() {
               decodedChannels={decodedChannels}
               connectionState={connectionState}
               updatedAt={updatedAt}
+              connectionDiagnostics={connectionDiagnostics}
               runtimeZones={trainZones}
               moduleZones={moduleZones}
               trainZonesState={trainZonesState}

@@ -19,6 +19,7 @@ interface AppStoreState {
   technicalSignals: DataSnapshot['technicalSignals']
   moduleInfoByZone: DataSnapshot['moduleInfoByZone']
   updatedAt: DataSnapshot['updatedAt']
+  connectionDiagnostics: DataSnapshot['connectionDiagnostics']
   summary: DataSnapshot['summary']
   actions: DataSnapshot['actions']
   connectionState: DataSnapshot['connectionState']
@@ -48,6 +49,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
   technicalSignals: [],
   moduleInfoByZone: {},
   updatedAt: null,
+  connectionDiagnostics: null,
   summary: {
     status: 'offline',
     modulesOnline: 0,
@@ -77,6 +79,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
       technicalSignals: snapshot.technicalSignals,
       moduleInfoByZone: snapshot.moduleInfoByZone,
       updatedAt: snapshot.updatedAt,
+      connectionDiagnostics: snapshot.connectionDiagnostics,
       summary: snapshot.summary,
       actions: snapshot.actions,
       connectionState: snapshot.connectionState,

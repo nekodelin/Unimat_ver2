@@ -20,6 +20,29 @@ export interface UiActions {
   tifon?: boolean
 }
 
+export type ConnectionIndicatorTone = 'green' | 'yellow' | 'red' | 'gray'
+
+export type ConnectionDiagnosticSeverity = 'normal' | 'warning' | 'error' | 'unknown'
+
+export interface ConnectionStatusItem {
+  id: string
+  label: string
+  tone: ConnectionIndicatorTone
+  details?: string
+  lastSuccessAt?: string | null
+}
+
+export interface ConnectionDiagnostics {
+  problemTitle: string
+  recommendedAction: string
+  severity: ConnectionDiagnosticSeverity
+  statuses: ConnectionStatusItem[]
+  lastUpdatedAt?: string | null
+  lastSuccessfulExchangeAt?: string | null
+  lastUpdatedAgo?: number | string | null
+  lastSuccessfulExchangeAgo?: number | string | null
+}
+
 export interface DataSnapshot {
   scenarioId: ScenarioId
   decodedChannels: ChannelState[]
@@ -30,6 +53,7 @@ export interface DataSnapshot {
   technicalSignals: TechnicalSignalState[]
   moduleInfoByZone: Record<string, ModuleFaultInfo>
   updatedAt: string | null
+  connectionDiagnostics: ConnectionDiagnostics | null
   summary: UiSummary
   actions: UiActions
   connectionState: ConnectionState

@@ -1,22 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
+import type {
+  ConnectionDiagnosticSeverity,
+  ConnectionDiagnostics,
+  ConnectionIndicatorTone,
+} from '../../types/app'
 import type { ChannelState } from '../../types/channel'
 import type { ConnectionState } from '../../types/status'
 import styles from './ConnectionStatusStrip.module.css'
-
-type IndicatorTone = 'green' | 'yellow' | 'red' | 'gray'
 
 interface ConnectionStatusStripProps {
   connectionState: ConnectionState
   decodedChannels: ChannelState[]
   updatedAt: string | null
+  connectionDiagnostics: ConnectionDiagnostics | null
 }
 
 interface StatusIndicator {
   id: string
   label: string
-  tone: IndicatorTone
+  tone: ConnectionIndicatorTone
   details: string
   lastSuccessAt: number | null
+}
+
+interface SystemDiagnosis {
+  problemTitle: string
+  recommendedAction: string
+  severity: ConnectionDiagnosticSeverity
 }
 
 const MAIN_MODULE_KEY = 'QL6C'
@@ -26,7 +36,7 @@ const FRESH_WARN_SECONDS = 30
 const UI_FLOW_OK_SECONDS = 7
 const UI_FLOW_WARN_SECONDS = 20
 
-const TONE_CLASS_BY_VALUE: Record<IndicatorTone, string> = {
+const TONE_CLASS_BY_VALUE: Record<ConnectionIndicatorTone, string> = {
   green: styles.dotGreen,
   yellow: styles.dotYellow,
   red: styles.dotRed,
@@ -43,7 +53,7 @@ function parseTimestamp(value: string | null | undefined): number | null {
 }
 
 function secondsSince(now: number, timestamp: number | null): number | null {
-  if (!timestamp) {
+  if (timestamp === null) {
     return null
   }
 
@@ -79,7 +89,29 @@ function formatSecondsAgo(seconds: number | null): string {
   return restHours > 0 ? `${days} д ${restHours} ч назад` : `${days} д назад`
 }
 
-function toneByAge(seconds: number | null): IndicatorTone {
+function formatRelativeAge(rawAgo: number | string | null | undefined, fallbackAge: number | null): string {
+  if (typeof rawAgo === 'number' && Number.isFinite(rawAgo)) {
+    return formatSecondsAgo(Math.max(0, Math.trunc(rawAgo)))
+  }
+
+  if (typeof rawAgo === 'string') {
+    const trimmed = rawAgo.trim()
+    if (!trimmed) {
+      return formatSecondsAgo(fallbackAge)
+    }
+
+    const parsed = Number(trimmed)
+    if (Number.isFinite(parsed)) {
+      return formatSecondsAgo(Math.max(0, Math.trunc(parsed)))
+    }
+
+    return trimmed
+  }
+
+  return formatSecondsAgo(fallbackAge)
+}
+
+function toneByAge(seconds: number | null): ConnectionIndicatorTone {
   if (seconds === null) {
     return 'gray'
   }
@@ -95,7 +127,7 @@ function toneByAge(seconds: number | null): IndicatorTone {
   return 'red'
 }
 
-function connectionTone(connectionState: ConnectionState): IndicatorTone {
+function connectionTone(connectionState: ConnectionState): ConnectionIndicatorTone {
   if (connectionState === 'connected') {
     return 'green'
   }
@@ -107,25 +139,141 @@ function connectionTone(connectionState: ConnectionState): IndicatorTone {
   return 'red'
 }
 
-function connectionDetails(connectionState: ConnectionState): string {
-  if (connectionState === 'connected') {
-    return 'Соединение с backend активно.'
+function toneCaption(tone: ConnectionIndicatorTone): string {
+  if (tone === 'green') {
+    return 'OK'
   }
 
-  if (connectionState === 'reconnecting') {
-    return 'Идет переподключение к backend.'
+  if (tone === 'yellow') {
+    return 'Внимание'
   }
 
-  return 'Связь с backend отсутствует.'
+  if (tone === 'red') {
+    return 'Ошибка'
+  }
+
+  return 'Нет данных'
+}
+
+function inferSeverity(indicators: StatusIndicator[]): ConnectionDiagnosticSeverity {
+  const tones = indicators.map((indicator) => indicator.tone)
+
+  if (tones.includes('red')) {
+    return 'error'
+  }
+
+  if (tones.includes('yellow')) {
+    return 'warning'
+  }
+
+  if (tones.every((tone) => tone === 'gray')) {
+    return 'unknown'
+  }
+
+  return 'normal'
+}
+
+function severityLabel(severity: ConnectionDiagnosticSeverity): string {
+  if (severity === 'error') {
+    return 'Ошибка'
+  }
+
+  if (severity === 'warning') {
+    return 'Предупреждение'
+  }
+
+  if (severity === 'normal') {
+    return 'Норма'
+  }
+
+  return 'Неизвестно'
+}
+
+function deriveFallbackDiagnosis(
+  indicators: StatusIndicator[],
+  connectionState: ConnectionState,
+): SystemDiagnosis {
+  const byId = new Map(indicators.map((indicator) => [indicator.id, indicator]))
+
+  if (connectionState === 'offline' || byId.get('backend')?.tone === 'red') {
+    return {
+      problemTitle: 'Нет связи с бекендом.',
+      recommendedAction: 'Проверьте сеть и доступность сервера, затем повторите подключение.',
+      severity: 'error',
+    }
+  }
+
+  const incomingTone = byId.get('incoming-data')?.tone ?? 'gray'
+  if (incomingTone === 'red' || incomingTone === 'gray') {
+    return {
+      problemTitle: 'Нет стабильного входящего потока от платы.',
+      recommendedAction: 'Проверьте питание платы, кабель и наличие входящих данных.',
+      severity: incomingTone === 'red' ? 'error' : 'warning',
+    }
+  }
+
+  const freshTone = byId.get('fresh-data')?.tone ?? 'gray'
+  if (freshTone === 'red') {
+    return {
+      problemTitle: 'Данные устарели.',
+      recommendedAction: 'Проверьте канал обмена и состояние источника данных.',
+      severity: 'error',
+    }
+  }
+
+  const severity = inferSeverity(indicators)
+  if (severity === 'warning') {
+    return {
+      problemTitle: 'Есть предупреждения по связи.',
+      recommendedAction: 'Проверьте отмеченные ниже статусы и устраните нестабильные зоны.',
+      severity,
+    }
+  }
+
+  if (severity === 'unknown') {
+    return {
+      problemTitle: 'Недостаточно данных для диагностики.',
+      recommendedAction: 'Дождитесь входящих данных или проверьте канал связи.',
+      severity,
+    }
+  }
+
+  return {
+    problemTitle: 'Критичных проблем не обнаружено.',
+    recommendedAction: 'Действий не требуется, продолжаем мониторинг.',
+    severity: 'normal',
+  }
+}
+
+function buildBackendDiagnosis(
+  diagnostics: ConnectionDiagnostics,
+  fallbackSeverity: ConnectionDiagnosticSeverity,
+): SystemDiagnosis {
+  const problemTitle = diagnostics.problemTitle.trim()
+  const recommendedAction = diagnostics.recommendedAction.trim()
+
+  const severity =
+    diagnostics.severity === 'unknown' ? fallbackSeverity : diagnostics.severity
+
+  return {
+    problemTitle:
+      problemTitle || (severity === 'normal' ? 'Критичных проблем не обнаружено.' : 'Требуется внимание к связи.'),
+    recommendedAction:
+      recommendedAction ||
+      (severity === 'normal'
+        ? 'Действий не требуется, продолжаем мониторинг.'
+        : 'Выполните рекомендуемые проверки по статусам ниже.'),
+    severity,
+  }
 }
 
 export function ConnectionStatusStrip({
   connectionState,
   decodedChannels,
   updatedAt,
+  connectionDiagnostics,
 }: ConnectionStatusStripProps) {
   const [now, setNow] = useState(() => Date.now())
-  const [lastUiFlowAt, setLastUiFlowAt] = useState<number | null>(null)
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -136,14 +284,6 @@ export function ConnectionStatusStrip({
       window.clearInterval(timer)
     }
   }, [])
-
-  useEffect(() => {
-    if (!updatedAt) {
-      return
-    }
-
-    setLastUiFlowAt(Date.now())
-  }, [updatedAt])
 
   const updatedAtTs = useMemo(() => parseTimestamp(updatedAt), [updatedAt])
 
@@ -163,7 +303,6 @@ export function ConnectionStatusStrip({
     () => decodedChannels.filter((channel) => channel.moduleKey.trim().toUpperCase() === MAIN_MODULE_KEY),
     [decodedChannels],
   )
-
   const boardKnownChannels = useMemo(
     () => boardChannels.filter((channel) => channel.backendStatus !== 'unknown'),
     [boardChannels],
@@ -184,9 +323,10 @@ export function ConnectionStatusStrip({
   const boardAge = secondsSince(now, boardLatestTs)
   const incomingAge = secondsSince(now, latestIncomingTs)
   const updatedAge = secondsSince(now, updatedAtTs)
-  const uiFlowAge = secondsSince(now, lastUiFlowAt)
+  const uiFlowAnchorTs = updatedAtTs ?? latestIncomingTs
+  const uiFlowAge = secondsSince(now, uiFlowAnchorTs)
 
-  const indicators: StatusIndicator[] = [
+  const fallbackIndicators: StatusIndicator[] = [
     {
       id: 'board-online',
       label: 'Плата онлайн',
@@ -227,7 +367,12 @@ export function ConnectionStatusStrip({
       id: 'backend',
       label: 'Бекенд доступен',
       tone: connectionTone(connectionState),
-      details: connectionDetails(connectionState),
+      details:
+        connectionState === 'connected'
+          ? 'Соединение с бекендом активно.'
+          : connectionState === 'reconnecting'
+            ? 'Идет переподключение к бекенду.'
+            : 'Связь с бекендом отсутствует.',
       lastSuccessAt: updatedAtTs,
     },
     {
@@ -243,9 +388,9 @@ export function ConnectionStatusStrip({
               : 'red',
       details:
         uiFlowAge === null
-          ? 'Сигнал обновления UI еще не получен.'
+          ? 'Сигнал обновления UI пока не зафиксирован.'
           : `Последняя доставка обновления в UI: ${formatSecondsAgo(uiFlowAge)}.`,
-      lastSuccessAt: lastUiFlowAt,
+      lastSuccessAt: uiFlowAnchorTs,
     },
     {
       id: 'fresh-data',
@@ -253,54 +398,100 @@ export function ConnectionStatusStrip({
       tone: toneByAge(updatedAge),
       details:
         updatedAge === null
-          ? 'Backend еще не передал отметку времени.'
+          ? 'Нет отметки времени по последним данным.'
           : `Возраст последних данных: ${formatSecondsAgo(updatedAge)}.`,
       lastSuccessAt: updatedAtTs,
     },
   ]
 
-  const lastUpdateText = `Последнее обновление: ${formatSecondsAgo(updatedAge)}`
+  const backendIndicators = useMemo<StatusIndicator[]>(() => {
+    if (!connectionDiagnostics || connectionDiagnostics.statuses.length === 0) {
+      return []
+    }
 
-  const lastSuccessTs = useMemo(() => {
-    const timestamps = [updatedAtTs, latestIncomingTs, lastUiFlowAt].filter(
-      (value): value is number => value !== null,
-    )
+    return connectionDiagnostics.statuses
+      .map((status, index) => ({
+        id: status.id || `status-${index + 1}`,
+        label: status.label.trim(),
+        tone: status.tone,
+        details: status.details?.trim() ?? '',
+        lastSuccessAt: parseTimestamp(status.lastSuccessAt),
+      }))
+      .filter((status) => status.label.length > 0)
+  }, [connectionDiagnostics])
+
+  const indicators = backendIndicators.length > 0 ? backendIndicators : fallbackIndicators
+  const fallbackDiagnosis = useMemo(
+    () => deriveFallbackDiagnosis(indicators, connectionState),
+    [connectionState, indicators],
+  )
+  const diagnosis = connectionDiagnostics
+    ? buildBackendDiagnosis(connectionDiagnostics, fallbackDiagnosis.severity)
+    : fallbackDiagnosis
+
+  const lastSuccessFallbackTs = useMemo(() => {
+    const timestamps = indicators
+      .map((indicator) => indicator.lastSuccessAt)
+      .filter((value): value is number => value !== null)
 
     if (timestamps.length === 0) {
       return null
     }
 
     return Math.max(...timestamps)
-  }, [lastUiFlowAt, latestIncomingTs, updatedAtTs])
+  }, [indicators])
 
-  const lastSuccessText = `Последний успешный обмен: ${formatSecondsAgo(secondsSince(now, lastSuccessTs))}`
+  const diagnosticsUpdatedTs = parseTimestamp(connectionDiagnostics?.lastUpdatedAt)
+  const diagnosticsSuccessTs = parseTimestamp(connectionDiagnostics?.lastSuccessfulExchangeAt)
+  const lastUpdatedText = `Последнее обновление: ${formatRelativeAge(
+    connectionDiagnostics?.lastUpdatedAgo,
+    secondsSince(now, diagnosticsUpdatedTs ?? updatedAtTs),
+  )}`
+  const lastSuccessfulText = `Последний успешный обмен: ${formatRelativeAge(
+    connectionDiagnostics?.lastSuccessfulExchangeAgo,
+    secondsSince(now, diagnosticsSuccessTs ?? lastSuccessFallbackTs),
+  )}`
+
+  const severityClass =
+    diagnosis.severity === 'error'
+      ? styles.summaryError
+      : diagnosis.severity === 'warning'
+        ? styles.summaryWarning
+        : diagnosis.severity === 'normal'
+          ? styles.summaryNormal
+          : styles.summaryUnknown
 
   return (
-    <section className={styles.strip} aria-label="Статусы связи">
-      <div className={styles.indicators}>
-        {indicators.map((indicator) => {
-          const details = `${indicator.label}. ${indicator.details} Последний успешный обмен: ${formatSecondsAgo(
-            secondsSince(now, indicator.lastSuccessAt),
-          )}.`
+    <section className={styles.strip} aria-label="Состояние системы связи">
+      <header className={styles.header}>
+        <h3 className={styles.title}>Состояние системы</h3>
+        <span className={`${styles.severityBadge} ${severityClass}`}>{severityLabel(diagnosis.severity)}</span>
+      </header>
 
-          return (
-            <button
-              key={indicator.id}
-              type="button"
-              className={styles.indicatorButton}
-              data-tooltip={details}
-              aria-label={details}
-            >
-              <span className={`${styles.dot} ${TONE_CLASS_BY_VALUE[indicator.tone]}`} aria-hidden="true" />
-              <span className={styles.indicatorLabel}>{indicator.label}</span>
-            </button>
-          )
-        })}
+      <div className={`${styles.summary} ${severityClass}`}>
+        <p className={styles.summaryLine}>
+          <span className={styles.summaryLabel}>Проблема:</span>
+          <span className={styles.summaryValue}>{diagnosis.problemTitle}</span>
+        </p>
+        <p className={styles.summaryLine}>
+          <span className={styles.summaryLabel}>Действие:</span>
+          <span className={styles.summaryValue}>{diagnosis.recommendedAction}</span>
+        </p>
+      </div>
+
+      <div className={styles.indicators} aria-label="Диагностика статусов связи">
+        {indicators.map((indicator) => (
+          <div key={indicator.id} className={styles.indicatorItem}>
+            <span className={`${styles.dot} ${TONE_CLASS_BY_VALUE[indicator.tone]}`} aria-hidden="true" />
+            <span className={styles.indicatorLabel}>{indicator.label}</span>
+            <span className={styles.indicatorTone}>{toneCaption(indicator.tone)}</span>
+          </div>
+        ))}
       </div>
 
       <div className={styles.meta}>
-        <span>{lastUpdateText}</span>
-        <span>{lastSuccessText}</span>
+        <span>{lastUpdatedText}</span>
+        <span>{lastSuccessfulText}</span>
       </div>
     </section>
   )

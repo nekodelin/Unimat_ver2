@@ -1,6 +1,7 @@
 import { ConnectionStatusStrip } from '../../components/train/ConnectionStatusStrip'
 import { TrainCanvas } from '../../components/train/TrainCanvas'
 import { TRAIN_ZONE_DEFS } from '../../data/zones'
+import type { ConnectionDiagnostics } from '../../types/app'
 import type { ChannelState } from '../../types/channel'
 import type { ConnectionState, ZoneStatus } from '../../types/status'
 import type { TrainZonesState } from '../../types/unimat'
@@ -11,6 +12,7 @@ interface TrainPageProps {
   decodedChannels: ChannelState[]
   connectionState: ConnectionState
   updatedAt: string | null
+  connectionDiagnostics: ConnectionDiagnostics | null
   runtimeZones: TrainZoneState[]
   moduleZones: ModuleZoneState[]
   trainZonesState: TrainZonesState
@@ -22,6 +24,7 @@ export function TrainPage({
   decodedChannels,
   connectionState,
   updatedAt,
+  connectionDiagnostics,
   runtimeZones: _runtimeZones,
   moduleZones: _moduleZones,
   trainZonesState,
@@ -50,6 +53,7 @@ export function TrainPage({
           connectionState={connectionState}
           decodedChannels={decodedChannels}
           updatedAt={updatedAt}
+          connectionDiagnostics={connectionDiagnostics}
         />
       </div>
       <div className={styles.stage}>

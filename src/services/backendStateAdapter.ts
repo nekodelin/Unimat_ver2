@@ -13,7 +13,16 @@ import {
 } from '../data/nodeWindowElements'
 import { TECHNICAL_SIGNAL_DEFS } from '../data/mockSignals'
 import { TRAIN_ZONE_DEFS } from '../data/zones'
-import type { DataSnapshot, ScenarioId, UiActions, UiSummary } from '../types/app'
+import type {
+  ConnectionDiagnostics,
+  ConnectionDiagnosticSeverity,
+  ConnectionIndicatorTone,
+  ConnectionStatusItem,
+  DataSnapshot,
+  ScenarioId,
+  UiActions,
+  UiSummary,
+} from '../types/app'
 import type {
   BackendChannel,
   BackendJournalEvent,
@@ -191,6 +200,302 @@ function toCollection<T>(value: unknown): T[] {
   }
 
   return []
+}
+
+function toOptionalIsoTimestamp(value: unknown): string | null {
+  const raw = asString(value).trim()
+  if (!raw) {
+    return null
+  }
+
+  const parsed = Date.parse(raw)
+  if (Number.isNaN(parsed)) {
+    return null
+  }
+
+  return new Date(parsed).toISOString()
+}
+
+function toRelativeAgeValue(value: unknown): number | string | null | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.trunc(value))
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return undefined
+    }
+
+    const numeric = Number(trimmed)
+    if (Number.isFinite(numeric)) {
+      return Math.max(0, Math.trunc(numeric))
+    }
+
+    return trimmed
+  }
+
+  return undefined
+}
+
+function resolveIndicatorTone(value: unknown): ConnectionIndicatorTone {
+  const boolValue = asBoolean(value)
+  if (boolValue === true) {
+    return 'green'
+  }
+
+  if (boolValue === false) {
+    return 'red'
+  }
+
+  const token = normalizeKey(asString(value))
+  if (!token) {
+    return 'gray'
+  }
+
+  if (
+    token === 'green' ||
+    token === 'ok' ||
+    token === 'normal' ||
+    token === 'online' ||
+    token === 'up' ||
+    token === 'connected' ||
+    token === 'success' ||
+    token === 'healthy'
+  ) {
+    return 'green'
+  }
+
+  if (
+    token === 'yellow' ||
+    token === 'warning' ||
+    token === 'warn' ||
+    token === 'reconnecting' ||
+    token === 'degraded' ||
+    token === 'stale' ||
+    token === 'unstable' ||
+    token === 'pending'
+  ) {
+    return 'yellow'
+  }
+
+  if (
+    token === 'red' ||
+    token === 'error' ||
+    token === 'offline' ||
+    token === 'down' ||
+    token === 'critical' ||
+    token === 'disconnected' ||
+    token === 'failed' ||
+    token === 'alarm'
+  ) {
+    return 'red'
+  }
+
+  return 'gray'
+}
+
+function resolveDiagnosticsSeverity(value: unknown): ConnectionDiagnosticSeverity {
+  const token = normalizeKey(asString(value))
+  if (!token) {
+    return 'unknown'
+  }
+
+  if (
+    token === 'error' ||
+    token === 'critical' ||
+    token === 'fault' ||
+    token === 'alarm' ||
+    token === 'red'
+  ) {
+    return 'error'
+  }
+
+  if (token === 'warning' || token === 'warn' || token === 'degraded' || token === 'yellow') {
+    return 'warning'
+  }
+
+  if (
+    token === 'normal' ||
+    token === 'ok' ||
+    token === 'healthy' ||
+    token === 'green' ||
+    token === 'success'
+  ) {
+    return 'normal'
+  }
+
+  return 'unknown'
+}
+
+function resolveStatusLabelFromKey(key: string): string {
+  const normalizedKey = normalizeKey(key)
+
+  const knownLabels: Record<string, string> = {
+    board_online: 'Плата онлайн',
+    boardonline: 'Плата онлайн',
+    incoming_data: 'Есть входящие данные',
+    incoming: 'Есть входящие данные',
+    backend_available: 'Бекенд доступен',
+    backend: 'Бекенд доступен',
+    ui_updates: 'Обновления доходят до интерфейса',
+    updates_to_ui: 'Обновления доходят до интерфейса',
+    data_fresh: 'Данные свежие',
+    freshness: 'Данные свежие',
+  }
+
+  if (knownLabels[normalizedKey]) {
+    return knownLabels[normalizedKey]
+  }
+
+  const formatted = key
+    .trim()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+
+  if (!formatted) {
+    return ''
+  }
+
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+}
+
+function normalizeConnectionStatusItem(
+  value: unknown,
+  index: number,
+  keyHint?: string,
+): ConnectionStatusItem | null {
+  if (isRecord(value)) {
+    const record = asRecord(value)
+    const label =
+      asString(record.label || record.title || record.name).trim() || (keyHint ? resolveStatusLabelFromKey(keyHint) : '')
+
+    if (!label) {
+      return null
+    }
+
+    return {
+      id:
+        asString(record.id || record.key || record.code).trim() ||
+        keyHint ||
+        `status-${index + 1}`,
+      label,
+      tone: resolveIndicatorTone(record.tone ?? record.color ?? record.status ?? record.state ?? record.severity),
+      details: asString(record.details || record.description || record.message).trim() || undefined,
+      lastSuccessAt: toOptionalIsoTimestamp(
+        record.lastSuccessAt ?? record.lastSuccessfulExchangeAt ?? record.updatedAt ?? record.timestamp,
+      ),
+    }
+  }
+
+  if (keyHint) {
+    return {
+      id: keyHint,
+      label: resolveStatusLabelFromKey(keyHint),
+      tone: resolveIndicatorTone(value),
+    }
+  }
+
+  return null
+}
+
+function normalizeConnectionStatuses(value: unknown): ConnectionStatusItem[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item, index) => normalizeConnectionStatusItem(item, index))
+      .filter((item): item is ConnectionStatusItem => item !== null)
+  }
+
+  if (isRecord(value)) {
+    return Object.entries(value)
+      .map(([key, item], index) => normalizeConnectionStatusItem(item, index, key))
+      .filter((status): status is ConnectionStatusItem => status !== null)
+  }
+
+  return []
+}
+
+function hasConnectionDiagnosticsPayload(value: unknown): boolean {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return Boolean(
+    asString(value.problemTitle || value.problem || value.issue).trim() ||
+      asString(value.recommendedAction || value.action || value.recommendation).trim() ||
+      value.connectionStatuses ||
+      value.statuses ||
+      value.indicators ||
+      value.lastUpdatedAt ||
+      value.lastSuccessfulExchangeAt ||
+      value.lastUpdatedAgo ||
+      value.lastSuccessfulExchangeAgo,
+  )
+}
+
+function buildConnectionDiagnostics(
+  source: UnknownRecord,
+  previous: ConnectionDiagnostics | null,
+): ConnectionDiagnostics {
+  const statuses = normalizeConnectionStatuses(
+    source.connectionStatuses ?? source.statuses ?? source.indicators,
+  )
+  const problemTitle = asString(source.problemTitle || source.problem || source.issue).trim()
+  const recommendedAction = asString(
+    source.recommendedAction || source.action || source.recommendation,
+  ).trim()
+  const severityToken = asString(source.severity || source.level || source.status).trim()
+  const parsedSeverity = severityToken ? resolveDiagnosticsSeverity(severityToken) : null
+
+  return {
+    problemTitle: problemTitle || previous?.problemTitle || '',
+    recommendedAction: recommendedAction || previous?.recommendedAction || '',
+    severity: parsedSeverity ?? previous?.severity ?? 'unknown',
+    statuses: statuses.length > 0 ? statuses : previous?.statuses ?? [],
+    lastUpdatedAt:
+      toOptionalIsoTimestamp(source.lastUpdatedAt ?? source.updatedAt) ??
+      previous?.lastUpdatedAt ??
+      null,
+    lastSuccessfulExchangeAt:
+      toOptionalIsoTimestamp(source.lastSuccessfulExchangeAt ?? source.lastSuccessAt) ??
+      previous?.lastSuccessfulExchangeAt ??
+      null,
+    lastUpdatedAgo: toRelativeAgeValue(source.lastUpdatedAgo) ?? previous?.lastUpdatedAgo,
+    lastSuccessfulExchangeAgo:
+      toRelativeAgeValue(source.lastSuccessfulExchangeAgo) ??
+      previous?.lastSuccessfulExchangeAgo,
+  }
+}
+
+function extractConnectionDiagnostics(
+  payload: BackendStatePayload,
+  previous: ConnectionDiagnostics | null,
+): ConnectionDiagnostics | null {
+  const payloadRecord = asRecord(payload as UnknownRecord)
+  const nestedPayload = asRecord(payloadRecord.payload)
+  const nestedState = asRecord(payloadRecord.state)
+
+  const candidates: unknown[] = [
+    payload.connectionDiagnostics,
+    asRecord(payload.diagnostics).connection,
+    nestedPayload.connectionDiagnostics,
+    asRecord(nestedPayload.diagnostics).connection,
+    nestedState.connectionDiagnostics,
+    asRecord(nestedState.diagnostics).connection,
+    payloadRecord,
+    nestedPayload,
+    nestedState,
+  ]
+
+  for (const candidate of candidates) {
+    if (!hasConnectionDiagnosticsPayload(candidate)) {
+      continue
+    }
+
+    return buildConnectionDiagnostics(asRecord(candidate), previous)
+  }
+
+  return previous
 }
 
 function toMask(value: unknown): number | null {
@@ -1225,6 +1530,7 @@ export function createEmptyUiSnapshot(
     technicalSignals: buildTechnicalSignals(channels, now),
     moduleInfoByZone: buildModuleInfoByZone(channels, {}),
     updatedAt: null,
+    connectionDiagnostics: null,
     summary: {
       status: 'offline',
       modulesOnline: 0,
@@ -1262,6 +1568,7 @@ export function mapBackendStateToUiState(input: unknown, options: AdapterOptions
   const technicalSignals = buildTechnicalSignals(channels, updatedAt)
   const moduleInfoByZone = buildModuleInfoByZone(channels, previous?.moduleInfoByZone ?? {})
   const journalEntries = buildJournalEntries(payload, options.error ?? null, decodedChannels)
+  const connectionDiagnostics = extractConnectionDiagnostics(payload, previous?.connectionDiagnostics ?? null)
   const summary = buildSummary(payload, decodedChannels)
   const actions = buildActions(payload)
 
@@ -1275,6 +1582,7 @@ export function mapBackendStateToUiState(input: unknown, options: AdapterOptions
     technicalSignals,
     moduleInfoByZone,
     updatedAt,
+    connectionDiagnostics,
     summary,
     actions,
     connectionState: options.connectionState ?? 'offline',
