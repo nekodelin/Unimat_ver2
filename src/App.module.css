@@ -1,4 +1,4 @@
-﻿.appRoot {
+.appRoot {
   min-height: 100dvh;
   width: 100%;
   min-width: 0;
@@ -25,5 +25,19 @@
   min-width: 0;
   width: 100%;
   display: flex;
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    padding-inline: 0.45rem;
+    padding-block: 0.35rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .workspace {
+    padding-inline: 0.25rem;
+    padding-block: 0.28rem;
+  }
 }
 

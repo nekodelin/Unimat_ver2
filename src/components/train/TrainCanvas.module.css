@@ -1,4 +1,4 @@
-﻿.canvasWrap {
+.canvasWrap {
   width: 100%;
   min-width: 0;
   display: flex;
@@ -74,6 +74,12 @@
 
 @media (max-width: 900px) {
   .zoneButton::before {
-    inset: -22%;
+    inset: -24%;
+  }
+}
+
+@media (max-width: 560px) {
+  .zoneButton::before {
+    inset: -30%;
   }
 }

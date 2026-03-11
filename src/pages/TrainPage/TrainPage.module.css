@@ -1,6 +1,7 @@
-﻿.page {
+.page {
   flex: 1;
-  display: block;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -8,21 +9,47 @@
   overflow-x: hidden;
 }
 
+.statusArea {
+  width: 100%;
+  max-width: min(100%, 96rem);
+  min-width: 0;
+  margin-inline: auto;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: clamp(0.64rem, 1.35vw, 0.92rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.1rem, 0.35vw, 0.18rem);
+}
+
 .stage {
   width: 100%;
   max-width: min(100%, 96rem);
   min-width: 0;
   margin-inline: auto;
-  display: grid;
-  align-items: end;
-  justify-items: center;
-  padding: clamp(0.75rem, 2vw, 2rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2.4vw, 2.2rem);
+  min-height: clamp(19rem, 44vh, 28rem);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(0.16rem, 0.45vw, 0.3rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.55rem, 1.2vw, 0.9rem);
 }
 
 @media (max-width: 900px) {
+  .statusArea {
+    padding: 0.52rem 0.3rem 0.16rem;
+  }
+
   .stage {
-    align-items: center;
-    padding: 0.8rem 0.3rem 0.6rem;
+    min-height: clamp(14rem, 42vh, 19rem);
+    padding: 0.12rem 0.3rem 0.45rem;
   }
 }
 
+@media (max-width: 560px) {
+  .statusArea {
+    padding: 0.45rem 0.25rem 0.14rem;
+  }
+
+  .stage {
+    min-height: clamp(12.2rem, 40vh, 16rem);
+    padding: 0.08rem 0.25rem 0.34rem;
+  }
+}

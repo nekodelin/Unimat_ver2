@@ -1,8 +1,12 @@
-﻿import type { CSSProperties, KeyboardEvent } from 'react'
+import type { CSSProperties, KeyboardEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import nodeBackgroundSvg from '../../assets/node-window/background.svg'
-import { NODE_WINDOW_ELEMENTS, NODE_WINDOW_ELEMENTS_BY_ZONE_ID } from '../../data/nodeWindowElements'
+import {
+  NODE_WINDOW_ELEMENTS,
+  NODE_WINDOW_TRAIN_ELEMENTS,
+  NODE_WINDOW_TRAIN_ELEMENTS_BY_ZONE_ID,
+} from '../../data/nodeWindowElements'
 import { NODE_WINDOW_HOTSPOTS, NODE_WINDOW_PHOTO_FRAME } from '../../data/nodeWindowHotspots'
 import type { ChannelState } from '../../types/channel'
 import type { ModuleFaultInfo } from '../../types/module'
@@ -34,6 +38,8 @@ interface LedViewState {
   red: boolean
   faultText: string
 }
+
+const TRAIN_ZONE_IDS = new Set(NODE_WINDOW_TRAIN_ELEMENTS.map((element) => element.zoneId))
 
 function resolveCardTitle(status: ZoneStatus): string {
   return status === 'fault' ? 'Неисправность' : 'Состояние узла'
@@ -102,13 +108,31 @@ export function NodeDetailModal({
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    if (TRAIN_ZONE_IDS.has(selectedZoneId)) {
+      return
+    }
+
+    const fallbackZoneId = NODE_WINDOW_TRAIN_ELEMENTS[0]?.zoneId
+    if (fallbackZoneId) {
+      onSelectZone(fallbackZoneId)
+    }
+  }, [open, onSelectZone, selectedZoneId])
+
   const zoneStateMap = useMemo(() => new Map(zones.map((zone) => [zone.id, zone])), [zones])
   const channelByZoneId = useMemo(
     () => new Map(decodedChannels.map((channel) => [channel.zoneId, channel])),
     [decodedChannels],
   )
 
-  const activeElement = NODE_WINDOW_ELEMENTS_BY_ZONE_ID.get(selectedZoneId) ?? NODE_WINDOW_ELEMENTS[0]
+  const activeElement =
+    NODE_WINDOW_TRAIN_ELEMENTS_BY_ZONE_ID.get(selectedZoneId) ??
+    NODE_WINDOW_TRAIN_ELEMENTS[0] ??
+    NODE_WINDOW_ELEMENTS[0]
   const activeZoneId = activeElement.zoneId
   const activeChannel = channelByZoneId.get(activeZoneId)
   const activeLedState = resolveChannelLedViewState(activeChannel)
@@ -150,6 +174,10 @@ export function NodeDetailModal({
   ].filter((item) => item.value.trim().length > 0)
 
   const selectZone = (zoneId: string) => {
+    if (!TRAIN_ZONE_IDS.has(zoneId)) {
+      return
+    }
+
     if (zoneId !== selectedZoneId) {
       onSelectZone(zoneId)
     }
@@ -192,25 +220,33 @@ export function NodeDetailModal({
 
               <ul className={styles.channelList}>
                 {NODE_WINDOW_ELEMENTS.map((element) => {
-                  const channel = channelByZoneId.get(element.zoneId)
-                  const selected = element.zoneId === activeZoneId
-                  const hovered = element.zoneId === hoveredZoneId
-                  const ledState = resolveNodeLedState(channel)
+                  const interactive = TRAIN_ZONE_IDS.has(element.zoneId)
+                  const channel = interactive ? channelByZoneId.get(element.zoneId) : undefined
+                  const selected = interactive && element.zoneId === activeZoneId
+                  const hovered = interactive && element.zoneId === hoveredZoneId
+                  const ledState = interactive ? resolveNodeLedState(channel) : 'off'
 
                   return (
                     <li key={element.id}>
                       <button
                         type="button"
-                        className={`${styles.channelButton} ${selected ? styles.channelButtonSelected : ''} ${
+                        className={`${styles.channelButton} ${
+                          interactive ? '' : styles.channelButtonPassive
+                        } ${selected ? styles.channelButtonSelected : ''} ${
                           hovered ? styles.channelButtonHovered : ''
                         }`}
-                        onClick={() => selectZone(element.zoneId)}
-                        onMouseEnter={() => setHoveredZoneId(element.zoneId)}
-                        onMouseLeave={() => setHoveredZoneId(null)}
-                        onFocus={() => setHoveredZoneId(element.zoneId)}
-                        onBlur={() => setHoveredZoneId(null)}
-                        aria-pressed={selected}
-                        title={`${channel?.channelKey ?? element.channelKey} | ${channel?.signalId ?? element.backendSignalId}`}
+                        onClick={interactive ? () => selectZone(element.zoneId) : undefined}
+                        onMouseEnter={interactive ? () => setHoveredZoneId(element.zoneId) : undefined}
+                        onMouseLeave={interactive ? () => setHoveredZoneId(null) : undefined}
+                        onFocus={interactive ? () => setHoveredZoneId(element.zoneId) : undefined}
+                        onBlur={interactive ? () => setHoveredZoneId(null) : undefined}
+                        aria-pressed={interactive ? selected : undefined}
+                        disabled={!interactive}
+                        title={
+                          interactive
+                            ? `${channel?.channelKey ?? element.channelKey} | ${channel?.signalId ?? element.backendSignalId}`
+                            : `${element.channelKey} | пассивный слот`
+                        }
                       >
                         <span className={styles.ledGroup}>
                           <span

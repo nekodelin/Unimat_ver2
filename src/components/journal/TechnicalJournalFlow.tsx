@@ -659,6 +659,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
                   </div>
                 </div>
 
+                <div className={styles.tableScroller}>
                 <div className={styles.tableHead}>
                   <span>Дата и время</span>
                   <span>Канал</span>
@@ -696,6 +697,7 @@ export function TechnicalJournalFlow({ entries: _entries }: TechnicalJournalFlow
                         </article>
                       ))
                     : null}
+                </div>
                 </div>
               </div>
             ) : null}

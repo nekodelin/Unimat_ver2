@@ -21,6 +21,8 @@ export const NODE_WINDOW_CHANNELS = [
   'F',
 ] as const
 
+export const TRAIN_NODE_WINDOW_CHANNELS = ['B', 'A', 'D', 'C', '7', '6', '9', '8'] as const
+
 export type NodeWindowChannel = (typeof NODE_WINDOW_CHANNELS)[number]
 
 export interface NodeWindowElementDefinition {
@@ -109,4 +111,18 @@ export const NODE_WINDOW_ELEMENTS_BY_SIGNAL_ID = new Map(
 
 export const NODE_WINDOW_ELEMENTS_BY_CHANNEL_KEY = new Map(
   NODE_WINDOW_ELEMENTS.map((element) => [element.channelKey, element]),
+)
+
+const TRAIN_CHANNEL_SET = new Set<NodeWindowChannel>(TRAIN_NODE_WINDOW_CHANNELS)
+
+export const NODE_WINDOW_TRAIN_ELEMENTS: NodeWindowElementDefinition[] = NODE_WINDOW_ELEMENTS.filter((element) =>
+  TRAIN_CHANNEL_SET.has(element.channel),
+)
+
+export const NODE_WINDOW_TRAIN_ELEMENTS_BY_ZONE_ID = new Map(
+  NODE_WINDOW_TRAIN_ELEMENTS.map((element) => [element.zoneId, element]),
+)
+
+export const NODE_WINDOW_DECORATIVE_ELEMENTS: NodeWindowElementDefinition[] = NODE_WINDOW_ELEMENTS.filter(
+  (element) => !TRAIN_CHANNEL_SET.has(element.channel),
 )

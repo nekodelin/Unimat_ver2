@@ -76,6 +76,14 @@
   background: #e8eaee;
 }
 
+.gridScroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 .grid {
   min-width: 0;
   display: grid;
@@ -337,7 +345,7 @@
 
 @media (max-width: 900px) {
   .wrap {
-    padding-left: clamp(2.8rem, 7.8vw, 4.4rem);
+    padding-left: clamp(1.6rem, 5vw, 2.2rem);
   }
 
   .tabs {
@@ -349,11 +357,16 @@
   }
 
   .grid {
+    min-width: 33rem;
     grid-template-columns: minmax(0, 1fr) clamp(4.2rem, 18vw, 5.8rem) minmax(0, 1fr);
   }
 }
 
 @media (max-width: 640px) {
+  .grid {
+    min-width: 31rem;
+  }
+
   .rightRow {
     white-space: normal;
     line-height: 1.2;

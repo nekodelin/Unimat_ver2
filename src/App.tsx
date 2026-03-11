@@ -24,6 +24,8 @@ function App() {
   const moduleZones = useAppStore((state) => state.moduleZones)
   const moduleInfoByZone = useAppStore((state) => state.moduleInfoByZone)
   const technicalSignals = useAppStore((state) => state.technicalSignals)
+  const updatedAt = useAppStore((state) => state.updatedAt)
+  const connectionState = useAppStore((state) => state.connectionState)
   const alarmMachine = useAppStore((state) => state.alarmMachine)
   const moduleOpen = useAppStore((state) => state.moduleOpen)
   const noDataOpen = useAppStore((state) => state.noDataOpen)
@@ -75,6 +77,9 @@ function App() {
         <main className={styles.main}>
           {activeTab === 'train' ? (
             <TrainPage
+              decodedChannels={decodedChannels}
+              connectionState={connectionState}
+              updatedAt={updatedAt}
               runtimeZones={trainZones}
               moduleZones={moduleZones}
               trainZonesState={trainZonesState}

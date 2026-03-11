@@ -1,4 +1,4 @@
-﻿.backdrop {
+.backdrop {
   position: fixed;
   inset: 0;
   z-index: 2100;
@@ -159,6 +159,15 @@
   gap: clamp(6px, 0.8vh, 10px);
   padding: 0 clamp(4px, 0.75vh, 8px);
   text-align: left;
+}
+
+.channelButton:disabled {
+  cursor: default;
+}
+
+.channelButtonPassive {
+  opacity: 0.54;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .channelButtonHovered {
@@ -471,9 +480,9 @@
   .content {
     grid-template-columns: 1fr;
     grid-template-areas:
+      'photo'
       'board'
-      'info'
-      'photo';
+      'info';
     grid-template-rows: auto auto auto;
     align-content: start;
     padding: clamp(0.2rem, 0.7vw, 0.3rem);
@@ -495,6 +504,12 @@
   .boardPanel {
     height: auto;
     max-height: none;
+  }
+
+  .channelList {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1px, 0.2vh, 3px);
   }
 
   .boardHeader {
@@ -522,6 +537,8 @@
     height: clamp(18px, 2.2vh, 24px);
     gap: clamp(3px, 0.45vh, 6px);
     padding: 0 clamp(3px, 0.55vh, 5px);
+    grid-template-columns: auto auto;
+    justify-content: space-between;
   }
 
   .ledGroup {
@@ -544,10 +561,19 @@
     letter-spacing: 0.02em;
   }
 
+  .infoPanel {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+  }
+
   .infoCard {
     min-height: 0;
+    max-height: min(36dvh, 15rem);
     padding: clamp(0.32rem, 0.9vw, 0.44rem);
-    overflow: visible;
+    overflow: auto;
+    border-radius: 0.72rem 0.72rem 0.3rem 0.3rem;
+    box-shadow: 0 -0.45rem 1rem rgba(0, 0, 0, 0.18);
   }
 
   .infoHead {
@@ -583,12 +609,16 @@
   }
 
   .photoPanel {
-    min-height: clamp(8.5rem, 24vh, 12.5rem);
+    min-height: clamp(12.5rem, 38vh, 18rem);
   }
 
   .photoViewport {
     aspect-ratio: 1063.52 / 830.013;
     height: auto;
+  }
+
+  .zonePath {
+    stroke-width: clamp(2.6px, 0.8vw, 5px);
   }
 }
 
@@ -619,6 +649,10 @@
     font-size: clamp(10px, 1.1vh, 12px);
   }
 
+  .channelList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .channelButton {
     min-height: clamp(18px, 2vh, 22px);
     height: clamp(18px, 2vh, 22px);
@@ -641,6 +675,7 @@
 
   .infoCard {
     padding: 0.28rem;
+    max-height: min(42dvh, 16rem);
   }
 
   .photoPanel {

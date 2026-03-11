@@ -88,68 +88,70 @@ export function TechnicalPanel({
       <div className={styles.panel}>
         {isPrimaryBoardTab ? (
           <>
-            <div className={styles.grid}>
-              <div className={styles.leftHeader}>Органы управления</div>
-              <div className={styles.boardHeader}>
-                <span className={`${styles.boardBitBadge} ${styles.boardBitYellow}`}>1</span>
-                <span className={`${styles.boardBitBadge} ${styles.boardBitRed}`}>0</span>
+            <div className={styles.gridScroll}>
+              <div className={styles.grid}>
+                <div className={styles.leftHeader}>Органы управления</div>
+                <div className={styles.boardHeader}>
+                  <span className={`${styles.boardBitBadge} ${styles.boardBitYellow}`}>1</span>
+                  <span className={`${styles.boardBitBadge} ${styles.boardBitRed}`}>0</span>
+                </div>
+                <div className={styles.rightHeader}>Неисправность</div>
+
+                {rows.map((row) => {
+                  const isFault = row.visualState === 'fault'
+                  const isMuted = row.visualState === 'inactive'
+                  const yellowLampOn = row.channel?.yellowLed ?? false
+                  const redLampOn = row.channel?.redLed ?? false
+                  const channelKey = row.channel?.channelKey ?? `QL6C${row.channelIndex}`
+                  const signalId = row.channel?.signalId ?? row.signalId ?? ''
+                  const titleChunks = [channelKey, signalId, row.title].filter((chunk) => chunk.length > 0)
+                  const labelText = row.signalId ? `${row.signalId} ${row.title}` : row.title
+
+                  return (
+                    <Fragment key={row.id}>
+                      <div
+                        className={`${styles.leftRow} ${isFault ? styles.faultRow : ''} ${
+                          isMuted ? styles.mutedRow : ''
+                        }`}
+                        data-channel-key={channelKey}
+                        data-signal-id={signalId}
+                        title={titleChunks.join(' | ')}
+                      >
+                        {labelText}
+                      </div>
+
+                      <div className={styles.boardRow} data-channel-key={channelKey} data-signal-id={signalId}>
+                        <span
+                          className={`${styles.lamp} ${styles.leftLamp} ${
+                            yellowLampOn ? styles.yellowLampOn : styles.yellowLampOff
+                          }`}
+                        />
+                        <span
+                          className={`${styles.lamp} ${styles.rightLamp} ${
+                            redLampOn ? styles.redLampOn : styles.redLampOff
+                          }`}
+                        />
+                        <span className={styles.channel}>{row.channelLabel}</span>
+                      </div>
+
+                      <div
+                        className={`${styles.rightRow} ${isFault ? styles.faultRow : ''} ${
+                          isMuted ? styles.mutedRow : ''
+                        }`}
+                        data-channel-key={channelKey}
+                        data-signal-id={signalId}
+                        title={row.faultText}
+                      >
+                        {row.faultText}
+                      </div>
+                    </Fragment>
+                  )
+                })}
+
+                <div className={styles.leftBoardSpacer} aria-hidden="true" />
+                <div className={styles.boardFooter}>QL6C</div>
+                <div className={styles.rightBoardSpacer} aria-hidden="true" />
               </div>
-              <div className={styles.rightHeader}>Неисправность</div>
-
-              {rows.map((row) => {
-                const isFault = row.visualState === 'fault'
-                const isMuted = row.visualState === 'inactive'
-                const yellowLampOn = row.channel?.yellowLed ?? false
-                const redLampOn = row.channel?.redLed ?? false
-                const channelKey = row.channel?.channelKey ?? `QL6C${row.channelIndex}`
-                const signalId = row.channel?.signalId ?? row.signalId ?? ''
-                const titleChunks = [channelKey, signalId, row.title].filter((chunk) => chunk.length > 0)
-                const labelText = row.signalId ? `${row.signalId} ${row.title}` : row.title
-
-                return (
-                  <Fragment key={row.id}>
-                    <div
-                      className={`${styles.leftRow} ${isFault ? styles.faultRow : ''} ${
-                        isMuted ? styles.mutedRow : ''
-                      }`}
-                      data-channel-key={channelKey}
-                      data-signal-id={signalId}
-                      title={titleChunks.join(' | ')}
-                    >
-                      {labelText}
-                    </div>
-
-                    <div className={styles.boardRow} data-channel-key={channelKey} data-signal-id={signalId}>
-                      <span
-                        className={`${styles.lamp} ${styles.leftLamp} ${
-                          yellowLampOn ? styles.yellowLampOn : styles.yellowLampOff
-                        }`}
-                      />
-                      <span
-                        className={`${styles.lamp} ${styles.rightLamp} ${
-                          redLampOn ? styles.redLampOn : styles.redLampOff
-                        }`}
-                      />
-                      <span className={styles.channel}>{row.channelLabel}</span>
-                    </div>
-
-                    <div
-                      className={`${styles.rightRow} ${isFault ? styles.faultRow : ''} ${
-                        isMuted ? styles.mutedRow : ''
-                      }`}
-                      data-channel-key={channelKey}
-                      data-signal-id={signalId}
-                      title={row.faultText}
-                    >
-                      {row.faultText}
-                    </div>
-                  </Fragment>
-                )
-              })}
-
-              <div className={styles.leftBoardSpacer} aria-hidden="true" />
-              <div className={styles.boardFooter}>QL6C</div>
-              <div className={styles.rightBoardSpacer} aria-hidden="true" />
             </div>
 
             <div className={styles.footer}>

@@ -466,8 +466,15 @@
   outline: none;
 }
 
-.tableHead {
+.tableScroller {
   min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tableHead {
+  min-width: 34rem;
   display: grid;
   grid-template-columns: 7.2rem minmax(0, 1.1fr) minmax(0, 0.85fr) minmax(0, 1.45fr);
   gap: clamp(0.2rem, 0.5vw, 0.32rem);
@@ -489,7 +496,7 @@
 
 .tableBody {
   min-height: 0;
-  min-width: 0;
+  min-width: 34rem;
   overflow-y: auto;
   background: #2a2a2a;
   padding: clamp(0.2rem, 0.45vw, 0.28rem);
@@ -717,6 +724,11 @@
     grid-template-columns: 6.8rem minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.7fr);
     font-size: clamp(0.6rem, 1.85vw, 0.72rem);
   }
+
+  .tableHead,
+  .tableBody {
+    min-width: 31rem;
+  }
 }
 
 @media (max-width: 560px) {
@@ -735,5 +747,10 @@
   .eventRow {
     grid-template-columns: 6.2rem minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.45fr);
     gap: 0.2rem;
+  }
+
+  .tableHead,
+  .tableBody {
+    min-width: 28rem;
   }
 }
