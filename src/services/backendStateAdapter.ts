@@ -415,6 +415,23 @@ function normalizeConnectionStatuses(value: unknown): ConnectionStatusItem[] {
   return []
 }
 
+function normalizeRecommendedChecks(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => asString(item).trim())
+      .filter((item) => item.length > 0)
+  }
+
+  if (isRecord(value)) {
+    return Object.values(value)
+      .map((item) => asString(item).trim())
+      .filter((item) => item.length > 0)
+  }
+
+  const single = asString(value).trim()
+  return single ? [single] : []
+}
+
 function hasConnectionDiagnosticsPayload(value: unknown): boolean {
   if (!isRecord(value)) {
     return false
@@ -422,6 +439,7 @@ function hasConnectionDiagnosticsPayload(value: unknown): boolean {
 
   return Boolean(
     asString(value.problemTitle || value.problem || value.issue).trim() ||
+      normalizeRecommendedChecks(value.recommendedChecks || value.checks || value.checkList).length > 0 ||
       asString(value.recommendedAction || value.action || value.recommendation).trim() ||
       value.connectionStatuses ||
       value.statuses ||
@@ -441,15 +459,24 @@ function buildConnectionDiagnostics(
     source.connectionStatuses ?? source.statuses ?? source.indicators,
   )
   const problemTitle = asString(source.problemTitle || source.problem || source.issue).trim()
+  const recommendedChecks = normalizeRecommendedChecks(
+    source.recommendedChecks ?? source.checks ?? source.checkList,
+  )
   const recommendedAction = asString(
     source.recommendedAction || source.action || source.recommendation,
   ).trim()
+  const legacyRecommendedChecks = recommendedAction ? [recommendedAction] : []
   const severityToken = asString(source.severity || source.level || source.status).trim()
   const parsedSeverity = severityToken ? resolveDiagnosticsSeverity(severityToken) : null
 
   return {
     problemTitle: problemTitle || previous?.problemTitle || '',
-    recommendedAction: recommendedAction || previous?.recommendedAction || '',
+    recommendedChecks:
+      recommendedChecks.length > 0
+        ? recommendedChecks
+        : legacyRecommendedChecks.length > 0
+          ? legacyRecommendedChecks
+          : previous?.recommendedChecks ?? [],
     severity: parsedSeverity ?? previous?.severity ?? 'unknown',
     statuses: statuses.length > 0 ? statuses : previous?.statuses ?? [],
     lastUpdatedAt:

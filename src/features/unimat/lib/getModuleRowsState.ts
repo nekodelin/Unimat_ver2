@@ -1,6 +1,5 @@
 import type { ChannelState } from '../../../types/channel'
 import type { DecodedChannelStatus, UnimatModuleRowState, UnimatTechRowConfig } from '../../../types/unimat'
-import { getChannelFaultText } from './getChannelFaultText'
 
 const SIGNAL_ALIAS_CANONICAL: Record<string, string> = {
   '1s202a': '1s202b',
@@ -62,6 +61,26 @@ function resolveRowChannel(
   return bySignalId
 }
 
+function getFaultLabel(yellowActive: boolean, redActive: boolean): string {
+  if (!yellowActive && !redActive) {
+    return 'Норма'
+  }
+
+  if (yellowActive && !redActive) {
+    return 'Норма'
+  }
+
+  if (yellowActive && redActive) {
+    return 'ОБРЫВ'
+  }
+
+  if (!yellowActive && redActive) {
+    return 'КЗ'
+  }
+
+  return 'Неизвестно'
+}
+
 export function getModuleRowsState(
   decodedChannels: ChannelState[] | undefined,
   rowsConfig: UnimatTechRowConfig[],
@@ -83,7 +102,7 @@ export function getModuleRowsState(
       : yellowLed
         ? 'normal'
         : 'inactive'
-    const faultText = redLed && channel ? getChannelFaultText(channel) : ''
+    const faultText = getFaultLabel(yellowLed, redLed)
 
     if (
       DEV_CHANNEL_DEBUG_ENABLED &&

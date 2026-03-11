@@ -105,6 +105,9 @@ export interface BackendConnectionDiagnostics {
   problemTitle?: string
   problem?: string
   issue?: string
+  recommendedChecks?: string[] | Record<string, string> | string
+  checks?: string[] | Record<string, string> | string
+  checkList?: string[] | Record<string, string> | string
   recommendedAction?: string
   action?: string
   recommendation?: string

@@ -25,7 +25,7 @@ interface StatusIndicator {
 
 interface SystemDiagnosis {
   problemTitle: string
-  recommendedAction: string
+  recommendedChecks: string[]
   severity: ConnectionDiagnosticSeverity
 }
 
@@ -197,8 +197,8 @@ function deriveFallbackDiagnosis(
 
   if (connectionState === 'offline' || byId.get('backend')?.tone === 'red') {
     return {
-      problemTitle: 'Нет связи с бекендом.',
-      recommendedAction: 'Проверьте сеть и доступность сервера, затем повторите подключение.',
+      problemTitle: 'Сервер недоступен',
+      recommendedChecks: ['Работает ли сервер', 'Есть ли интернет-соединение', 'Запущен ли backend сервис'],
       severity: 'error',
     }
   }
@@ -206,8 +206,8 @@ function deriveFallbackDiagnosis(
   const incomingTone = byId.get('incoming-data')?.tone ?? 'gray'
   if (incomingTone === 'red' || incomingTone === 'gray') {
     return {
-      problemTitle: 'Нет стабильного входящего потока от платы.',
-      recommendedAction: 'Проверьте питание платы, кабель и наличие входящих данных.',
+      problemTitle: 'Нет данных от Orange',
+      recommendedChecks: ['Orange', 'Кабель к плате', 'Передачу данных на сервер'],
       severity: incomingTone === 'red' ? 'error' : 'warning',
     }
   }
@@ -215,8 +215,8 @@ function deriveFallbackDiagnosis(
   const freshTone = byId.get('fresh-data')?.tone ?? 'gray'
   if (freshTone === 'red') {
     return {
-      problemTitle: 'Данные устарели.',
-      recommendedAction: 'Проверьте канал обмена и состояние источника данных.',
+      problemTitle: 'Данные давно не обновлялись',
+      recommendedChecks: ['Источник данных включен', 'Передача данных не остановлена', 'Сервер принимает новые данные'],
       severity: 'error',
     }
   }
@@ -224,45 +224,50 @@ function deriveFallbackDiagnosis(
   const severity = inferSeverity(indicators)
   if (severity === 'warning') {
     return {
-      problemTitle: 'Есть предупреждения по связи.',
-      recommendedAction: 'Проверьте отмеченные ниже статусы и устраните нестабильные зоны.',
+      problemTitle: 'Есть предупреждение по связи',
+      recommendedChecks: ['Проверьте пункты со статусом "Внимание"', 'Проверьте пункты со статусом "Ошибка"'],
       severity,
     }
   }
 
   if (severity === 'unknown') {
     return {
-      problemTitle: 'Недостаточно данных для диагностики.',
-      recommendedAction: 'Дождитесь входящих данных или проверьте канал связи.',
+      problemTitle: 'Недостаточно данных',
+      recommendedChecks: ['Orange', 'Кабель к плате', 'Передачу данных на сервер'],
       severity,
     }
   }
 
   return {
-    problemTitle: 'Критичных проблем не обнаружено.',
-    recommendedAction: 'Действий не требуется, продолжаем мониторинг.',
+    problemTitle: 'Не обнаружена',
+    recommendedChecks: [],
     severity: 'normal',
   }
 }
 
 function buildBackendDiagnosis(
   diagnostics: ConnectionDiagnostics,
-  fallbackSeverity: ConnectionDiagnosticSeverity,
+  fallbackDiagnosis: SystemDiagnosis,
 ): SystemDiagnosis {
   const problemTitle = diagnostics.problemTitle.trim()
-  const recommendedAction = diagnostics.recommendedAction.trim()
+  const recommendedChecks = diagnostics.recommendedChecks
+    .map((check) => check.trim())
+    .filter((check) => check.length > 0)
 
   const severity =
-    diagnostics.severity === 'unknown' ? fallbackSeverity : diagnostics.severity
+    diagnostics.severity === 'unknown' ? fallbackDiagnosis.severity : diagnostics.severity
+
+  const fallbackProblemTitle =
+    severity === 'normal' ? 'Не обнаружена' : fallbackDiagnosis.problemTitle || 'Требуется внимание'
 
   return {
-    problemTitle:
-      problemTitle || (severity === 'normal' ? 'Критичных проблем не обнаружено.' : 'Требуется внимание к связи.'),
-    recommendedAction:
-      recommendedAction ||
-      (severity === 'normal'
-        ? 'Действий не требуется, продолжаем мониторинг.'
-        : 'Выполните рекомендуемые проверки по статусам ниже.'),
+    problemTitle: problemTitle || fallbackProblemTitle,
+    recommendedChecks:
+      recommendedChecks.length > 0
+        ? recommendedChecks
+        : severity === 'normal'
+          ? []
+          : fallbackDiagnosis.recommendedChecks,
     severity,
   }
 }
@@ -426,8 +431,9 @@ export function ConnectionStatusStrip({
     [connectionState, indicators],
   )
   const diagnosis = connectionDiagnostics
-    ? buildBackendDiagnosis(connectionDiagnostics, fallbackDiagnosis.severity)
+    ? buildBackendDiagnosis(connectionDiagnostics, fallbackDiagnosis)
     : fallbackDiagnosis
+  const showHealthyState = diagnosis.recommendedChecks.length === 0 && diagnosis.severity === 'normal'
 
   const lastSuccessFallbackTs = useMemo(() => {
     const timestamps = indicators
@@ -473,10 +479,20 @@ export function ConnectionStatusStrip({
           <span className={styles.summaryLabel}>Проблема:</span>
           <span className={styles.summaryValue}>{diagnosis.problemTitle}</span>
         </p>
-        <p className={styles.summaryLine}>
-          <span className={styles.summaryLabel}>Действие:</span>
-          <span className={styles.summaryValue}>{diagnosis.recommendedAction}</span>
-        </p>
+        {diagnosis.recommendedChecks.length > 0 ? (
+          <div className={styles.summaryChecks}>
+            <span className={styles.summaryLabel}>Что проверить:</span>
+            <ul className={styles.checkList}>
+              {diagnosis.recommendedChecks.map((check, index) => (
+                <li key={`${check}-${index}`} className={styles.checkItem}>
+                  {check}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          showHealthyState && <p className={styles.summaryOk}>Система работает нормально</p>
+        )}
       </div>
 
       <div className={styles.indicators} aria-label="Диагностика статусов связи">

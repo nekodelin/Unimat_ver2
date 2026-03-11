@@ -34,7 +34,7 @@ export interface ConnectionStatusItem {
 
 export interface ConnectionDiagnostics {
   problemTitle: string
-  recommendedAction: string
+  recommendedChecks: string[]
   severity: ConnectionDiagnosticSeverity
   statuses: ConnectionStatusItem[]
   lastUpdatedAt?: string | null
