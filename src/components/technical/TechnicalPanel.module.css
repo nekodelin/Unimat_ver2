@@ -74,6 +74,9 @@
   min-width: 0;
   border: 1px solid #b9bec5;
   background: #e8eaee;
+  --board-lamp-size: clamp(0.82rem, 1vw, 1.05rem);
+  --board-channel-width: clamp(0.9rem, 1.1vw, 1.2rem);
+  --board-column-gap: clamp(0.45rem, 0.85vw, 0.85rem);
 }
 
 .gridScroll {
@@ -108,8 +111,11 @@
 }
 
 .boardHeader {
+  display: grid;
+  grid-template-columns: var(--board-lamp-size) var(--board-lamp-size) var(--board-channel-width);
   justify-content: center;
-  gap: clamp(0.45rem, 0.85vw, 0.85rem);
+  justify-items: center;
+  column-gap: var(--board-column-gap);
   background: #1f2736;
   color: #eff0f2;
   border-bottom: none;
@@ -166,8 +172,11 @@
 
 .boardRow {
   background: #1f2736;
+  display: grid;
+  grid-template-columns: var(--board-lamp-size) var(--board-lamp-size) var(--board-channel-width);
   justify-content: center;
-  gap: clamp(0.45rem, 0.85vw, 0.85rem);
+  justify-items: center;
+  column-gap: var(--board-column-gap);
   border-bottom: none;
 }
 
@@ -196,7 +205,8 @@
 }
 
 .channel {
-  width: clamp(0.9rem, 1.1vw, 1.2rem);
+  grid-column: 3;
+  width: var(--board-channel-width);
   text-align: center;
   color: #eceff4;
   font-size: clamp(1rem, 1.55vw, 1.5rem);
@@ -204,8 +214,8 @@
 }
 
 .lamp {
-  width: clamp(0.82rem, 1vw, 1.05rem);
-  height: clamp(0.82rem, 1vw, 1.05rem);
+  width: var(--board-lamp-size);
+  height: var(--board-lamp-size);
   border-radius: 50%;
   border: 2px solid rgba(0, 0, 0, 0.35);
 }

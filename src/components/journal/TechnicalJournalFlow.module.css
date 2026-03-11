@@ -467,22 +467,23 @@
 }
 
 .tableScroller {
+  --journal-table-columns: minmax(6.6rem, 1.08fr) minmax(2.1rem, 0.45fr) minmax(4.4rem, 0.78fr) minmax(0, 1.45fr);
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
 .tableHead {
-  min-width: 34rem;
+  min-width: 0;
   display: grid;
-  grid-template-columns: 7.2rem minmax(0, 1.1fr) minmax(0, 0.85fr) minmax(0, 1.45fr);
+  grid-template-columns: var(--journal-table-columns);
   gap: clamp(0.2rem, 0.5vw, 0.32rem);
   align-items: center;
-  padding: clamp(0.26rem, 0.58vw, 0.36rem) clamp(0.3rem, 0.72vw, 0.45rem);
+  padding: clamp(0.22rem, 0.5vw, 0.32rem) clamp(0.26rem, 0.64vw, 0.4rem);
   background: #d6d9de;
   border-bottom: 1px solid #bec3cb;
-  font-size: clamp(0.58rem, 0.72vw, 0.66rem);
+  font-size: clamp(0.54rem, 0.68vw, 0.62rem);
   font-weight: 700;
   color: #1e2025;
 }
@@ -496,10 +497,10 @@
 
 .tableBody {
   min-height: 0;
-  min-width: 34rem;
+  min-width: 0;
   overflow-y: auto;
   background: #2a2a2a;
-  padding: clamp(0.2rem, 0.45vw, 0.28rem);
+  padding: clamp(0.18rem, 0.42vw, 0.25rem);
   display: grid;
   gap: clamp(0.18rem, 0.4vw, 0.28rem);
   align-content: start;
@@ -508,13 +509,13 @@
 .eventRow {
   min-width: 0;
   display: grid;
-  grid-template-columns: 7.2rem minmax(0, 1.1fr) minmax(0, 0.85fr) minmax(0, 1.45fr);
+  grid-template-columns: var(--journal-table-columns);
   gap: clamp(0.2rem, 0.5vw, 0.32rem);
   align-items: start;
-  padding: clamp(0.24rem, 0.5vw, 0.34rem);
+  padding: clamp(0.2rem, 0.45vw, 0.3rem);
   border-radius: clamp(0.22rem, 0.4vw, 0.32rem);
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: clamp(0.56rem, 0.68vw, 0.64rem);
+  font-size: clamp(0.54rem, 0.66vw, 0.62rem);
 }
 
 .eventCell {
@@ -525,6 +526,8 @@
 
 .eventCellElement {
   min-width: 0;
+  text-align: center;
+  font-weight: 700;
 }
 
 .eventCellDescription {
@@ -717,6 +720,10 @@
 
   .filterRow {
     grid-template-columns: 1fr;
+  }
+
+  .tableScroller {
+    overflow-x: auto;
   }
 
   .tableHead,

@@ -13,6 +13,7 @@ import type { ModuleFaultInfo } from '../../types/module'
 import type { ZoneStatus } from '../../types/status'
 import type { ModuleZoneState } from '../../types/zone'
 import { STATUS_VISUALS } from '../../utils/status'
+import { normalizeReadableText } from '../../utils/textNormalization'
 import styles from './NodeDetailModal.module.css'
 
 interface NodeDetailModalProps {
@@ -73,6 +74,10 @@ function resolveNodeLedState(channel: ChannelState | undefined): NodeLedState {
   }
 
   return 'off'
+}
+
+function toCardText(value: string | null | undefined, fallback = ''): string {
+  return normalizeReadableText(value, fallback)
 }
 
 export function NodeDetailModal({
@@ -166,11 +171,14 @@ export function NodeDetailModal({
     isActive: activeChannel?.isActive ?? runtimeInfo?.isActive ?? fallbackInfo.isActive ?? false,
   }
   const details = [
-    { label: 'Название', value: cardInfo.title },
-    { label: 'Состояние', value: cardInfo.stateLabel },
-    { label: 'Сообщение', value: cardInfo.message },
-    { label: 'Причина', value: cardInfo.cause || cardInfo.reason },
-    { label: 'Действие', value: cardInfo.action },
+    { label: 'Название', value: toCardText(cardInfo.title, activeElement.title) },
+    { label: 'Состояние', value: toCardText(cardInfo.stateLabel, 'Неизвестно') },
+    { label: 'Сообщение', value: toCardText(cardInfo.message) },
+    { label: 'Причина', value: toCardText(cardInfo.cause || cardInfo.reason) },
+    {
+      label: 'Действие',
+      value: toCardText(cardInfo.action, 'Проверить цепь исполнительного механизма'),
+    },
   ].filter((item) => item.value.trim().length > 0)
 
   const selectZone = (zoneId: string) => {
