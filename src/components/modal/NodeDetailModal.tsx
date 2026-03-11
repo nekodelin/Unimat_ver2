@@ -32,12 +32,12 @@ const STATUS_LABELS: Record<ZoneStatus, string> = {
   inactive: 'Неактивно',
 }
 
-type NodeLedState = 'off' | 'yellow' | 'yellow-red'
+type FaultLabel = 'Норма' | 'ОБРЫВ' | 'КЗ' | 'Неизвестно'
 
-interface LedViewState {
-  yellow: boolean
-  red: boolean
-  faultText: string
+type ChannelVisualState = {
+  faultLabel: FaultLabel
+  yellowActive: boolean
+  redActive: boolean
 }
 
 const TRAIN_ZONE_IDS = new Set(NODE_WINDOW_TRAIN_ELEMENTS.map((element) => element.zoneId))
@@ -46,34 +46,115 @@ function resolveCardTitle(status: ZoneStatus): string {
   return status === 'fault' ? 'Неисправность' : 'Состояние узла'
 }
 
-function resolveChannelLedViewState(channel: ChannelState | undefined): LedViewState {
-  if (!channel) {
-    return {
-      yellow: false,
-      red: false,
-      faultText: '',
-    }
+function normalizeToken(value: string | null | undefined): string {
+  return normalizeReadableText(value, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+}
+
+function getFaultLabelFromSignals(yellowActive: boolean, redActive: boolean): FaultLabel {
+  if (!yellowActive && !redActive) {
+    return 'Норма'
   }
 
+  if (yellowActive && !redActive) {
+    return 'Норма'
+  }
+
+  if (yellowActive && redActive) {
+    return 'ОБРЫВ'
+  }
+
+  if (!yellowActive && redActive) {
+    return 'КЗ'
+  }
+
+  return 'Неизвестно'
+}
+
+function getIndicatorsByFaultLabel(
+  faultLabel: FaultLabel,
+  preferYellowForNormal: boolean,
+): Pick<ChannelVisualState, 'yellowActive' | 'redActive'> {
+  if (faultLabel === 'ОБРЫВ') {
+    return { yellowActive: true, redActive: true }
+  }
+
+  if (faultLabel === 'КЗ') {
+    return { yellowActive: false, redActive: true }
+  }
+
+  if (faultLabel === 'Норма') {
+    return preferYellowForNormal
+      ? { yellowActive: true, redActive: false }
+      : { yellowActive: false, redActive: false }
+  }
+
+  return { yellowActive: false, redActive: false }
+}
+
+function resolveFaultLabel(channel: ChannelState | undefined, fallbackStateLabel?: string): FaultLabel {
+  if (!channel && !fallbackStateLabel) {
+    return 'Неизвестно'
+  }
+
+  const stateToken = normalizeToken(channel?.stateLabel || fallbackStateLabel)
+  const backendStatusToken = normalizeToken(channel?.backendStatus)
+
+  if (
+    stateToken === 'кз' ||
+    stateToken.includes('коротк') ||
+    backendStatusToken === 'short_circuit'
+  ) {
+    return 'КЗ'
+  }
+
+  if (
+    stateToken === 'обрыв' ||
+    stateToken.includes('обрыв') ||
+    backendStatusToken === 'open_circuit'
+  ) {
+    return 'ОБРЫВ'
+  }
+
+  if (
+    stateToken === 'норма' ||
+    stateToken === 'ok' ||
+    stateToken === 'normal' ||
+    backendStatusToken === 'normal'
+  ) {
+    return 'Норма'
+  }
+
+  return getFaultLabelFromSignals(channel?.yellowLed ?? false, channel?.redLed ?? false)
+}
+
+function resolveChannelVisualState(
+  channel: ChannelState | undefined,
+  fallbackStateLabel?: string,
+): ChannelVisualState {
+  const faultLabel = resolveFaultLabel(channel, fallbackStateLabel)
+  const preferYellowForNormal = (channel?.yellowLed ?? false) && !(channel?.redLed ?? false)
+  const indicators = getIndicatorsByFaultLabel(faultLabel, preferYellowForNormal)
+
   return {
-    yellow: channel.yellowLed,
-    red: channel.redLed,
-    faultText: channel.redLed ? channel.faultText : '',
+    faultLabel,
+    yellowActive: indicators.yellowActive,
+    redActive: indicators.redActive,
   }
 }
 
-function resolveNodeLedState(channel: ChannelState | undefined): NodeLedState {
-  const ledState = resolveChannelLedViewState(channel)
-
-  if (ledState.red) {
-    return 'yellow-red'
+function resolveZoneStatusByFaultLabel(faultLabel: FaultLabel): ZoneStatus {
+  if (faultLabel === 'ОБРЫВ' || faultLabel === 'КЗ') {
+    return 'fault'
   }
 
-  if (ledState.yellow) {
-    return 'yellow'
+  if (faultLabel === 'Норма') {
+    return 'normal'
   }
 
-  return 'off'
+  return 'inactive'
 }
 
 function toCardText(value: string | null | undefined, fallback = ''): string {
@@ -140,8 +221,6 @@ export function NodeDetailModal({
     NODE_WINDOW_ELEMENTS[0]
   const activeZoneId = activeElement.zoneId
   const activeChannel = channelByZoneId.get(activeZoneId)
-  const activeLedState = resolveChannelLedViewState(activeChannel)
-  const activeStatus: ZoneStatus = activeLedState.red ? 'fault' : activeLedState.yellow ? 'normal' : 'inactive'
 
   const runtimeInfo = moduleInfoByZone[activeZoneId]
   const fallbackInfo = activeElement.info
@@ -170,9 +249,11 @@ export function NodeDetailModal({
     isFault: activeChannel?.isFault ?? runtimeInfo?.isFault ?? fallbackInfo.isFault ?? false,
     isActive: activeChannel?.isActive ?? runtimeInfo?.isActive ?? fallbackInfo.isActive ?? false,
   }
+  const activeVisualState = resolveChannelVisualState(activeChannel, cardInfo.stateLabel)
+  const activeStatus = resolveZoneStatusByFaultLabel(activeVisualState.faultLabel)
   const details = [
     { label: 'Название', value: toCardText(cardInfo.title, activeElement.title) },
-    { label: 'Состояние', value: toCardText(cardInfo.stateLabel, 'Неизвестно') },
+    { label: 'Состояние', value: activeVisualState.faultLabel },
     { label: 'Сообщение', value: toCardText(cardInfo.message) },
     { label: 'Причина', value: toCardText(cardInfo.cause || cardInfo.reason) },
     {
@@ -232,7 +313,9 @@ export function NodeDetailModal({
                   const channel = interactive ? channelByZoneId.get(element.zoneId) : undefined
                   const selected = interactive && element.zoneId === activeZoneId
                   const hovered = interactive && element.zoneId === hoveredZoneId
-                  const ledState = interactive ? resolveNodeLedState(channel) : 'off'
+                  const visualState = interactive
+                    ? resolveChannelVisualState(channel)
+                    : { faultLabel: 'Неизвестно', yellowActive: false, redActive: false }
 
                   return (
                     <li key={element.id}>
@@ -259,12 +342,12 @@ export function NodeDetailModal({
                         <span className={styles.ledGroup}>
                           <span
                             className={`${styles.led} ${
-                              ledState === 'off' ? styles.ledYellowOff : styles.ledYellowOn
+                              visualState.yellowActive ? styles.ledYellowOn : styles.ledYellowOff
                             } ${selected ? styles.ledSelected : ''}`}
                           />
                           <span
                             className={`${styles.led} ${
-                              ledState === 'yellow-red' ? styles.ledRedOn : styles.ledRedOff
+                              visualState.redActive ? styles.ledRedOn : styles.ledRedOff
                             } ${selected ? styles.ledSelected : ''}`}
                           />
                         </span>

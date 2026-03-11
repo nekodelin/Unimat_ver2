@@ -63,11 +63,11 @@ function resolveRowChannel(
 
 function getFaultLabel(yellowActive: boolean, redActive: boolean): string {
   if (!yellowActive && !redActive) {
-    return 'Норма'
+    return ''
   }
 
   if (yellowActive && !redActive) {
-    return 'Норма'
+    return ''
   }
 
   if (yellowActive && redActive) {
@@ -78,7 +78,7 @@ function getFaultLabel(yellowActive: boolean, redActive: boolean): string {
     return 'КЗ'
   }
 
-  return 'Неизвестно'
+  return ''
 }
 
 export function getModuleRowsState(
